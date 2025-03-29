@@ -63,14 +63,14 @@ export default function ArticleEditor({ article, mode }: ArticleEditorProps) {
             <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
                     <label htmlFor="title" className="block text-sm font-medium text-gray-700">
-                        Заголовок
+                        Название
                     </label>
                     <input
                         type="text"
                         id="title"
                         value={title}
                         onChange={(e) => setTitle(e.target.value)}
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                        className="mt-1 py-1 px-3 w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                         required
                     />
                 </div>
@@ -80,7 +80,7 @@ export default function ArticleEditor({ article, mode }: ArticleEditorProps) {
                         <button
                             type="button"
                             onClick={() => insertMarkdown('**$1**')}
-                            className="px-3 py-1 text-sm bg-gray-100 hover:bg-gray-200 rounded"
+                            className="neutral-button"
                             title="Жирный текст"
                         >
                             B
@@ -88,7 +88,7 @@ export default function ArticleEditor({ article, mode }: ArticleEditorProps) {
                         <button
                             type="button"
                             onClick={() => insertMarkdown('*$1*')}
-                            className="px-3 py-1 text-sm bg-gray-100 hover:bg-gray-200 rounded"
+                            className="neutral-button"
                             title="Курсив"
                         >
                             I
@@ -96,7 +96,7 @@ export default function ArticleEditor({ article, mode }: ArticleEditorProps) {
                         <button
                             type="button"
                             onClick={() => insertMarkdown('# $1')}
-                            className="px-3 py-1 text-sm bg-gray-100 hover:bg-gray-200 rounded"
+                            className="neutral-button"
                             title="Заголовок"
                         >
                             H1
@@ -104,7 +104,7 @@ export default function ArticleEditor({ article, mode }: ArticleEditorProps) {
                         <button
                             type="button"
                             onClick={() => insertMarkdown('## $1')}
-                            className="px-3 py-1 text-sm bg-gray-100 hover:bg-gray-200 rounded"
+                            className="neutral-button"
                             title="Подзаголовок"
                         >
                             H2
@@ -112,7 +112,7 @@ export default function ArticleEditor({ article, mode }: ArticleEditorProps) {
                         <button
                             type="button"
                             onClick={() => insertMarkdown('- $1')}
-                            className="px-3 py-1 text-sm bg-gray-100 hover:bg-gray-200 rounded"
+                            className="neutral-button"
                             title="Список"
                         >
                             • List
@@ -120,7 +120,7 @@ export default function ArticleEditor({ article, mode }: ArticleEditorProps) {
                         <button
                             type="button"
                             onClick={() => insertMarkdown('1. $1')}
-                            className="px-3 py-1 text-sm bg-gray-100 hover:bg-gray-200 rounded"
+                            className="neutral-button"
                             title="Нумерованный список"
                         >
                             1. List
@@ -128,7 +128,7 @@ export default function ArticleEditor({ article, mode }: ArticleEditorProps) {
                         <button
                             type="button"
                             onClick={() => insertMarkdown('> $1')}
-                            className="px-3 py-1 text-sm bg-gray-100 hover:bg-gray-200 rounded"
+                            className="neutral-button"
                             title="Цитата"
                         >
                             {'>'} Quote
@@ -136,7 +136,7 @@ export default function ArticleEditor({ article, mode }: ArticleEditorProps) {
                         <button
                             type="button"
                             onClick={() => insertMarkdown('`$1`')}
-                            className="px-3 py-1 text-sm bg-gray-100 hover:bg-gray-200 rounded"
+                            className="neutral-button"
                             title="Код"
                         >
                             Code
@@ -145,7 +145,7 @@ export default function ArticleEditor({ article, mode }: ArticleEditorProps) {
                     <button
                         type="button"
                         onClick={() => setIsPreview(!isPreview)}
-                        className="px-4 py-2 text-sm bg-indigo-100 hover:bg-indigo-200 rounded"
+                        className="neutral-button"
                     >
                         {isPreview ? 'Редактировать' : 'Предпросмотр'}
                     </button>
@@ -156,7 +156,7 @@ export default function ArticleEditor({ article, mode }: ArticleEditorProps) {
                         Содержание
                     </label>
                     {isPreview ? (
-                        <div className="mt-1 block w-full rounded-md border border-gray-300 p-4 prose max-w-none">
+                        <div className="mt-1 block w-full rounded-md max-w-none">
                             <ReactMarkdown remarkPlugins={[remarkGfm]}>
                                 {content}
                             </ReactMarkdown>

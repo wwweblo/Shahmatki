@@ -25,6 +25,7 @@ export default function AuthForm() {
         const email = formData.get('email') as string;
         const password = formData.get('password') as string;
         const confirmPassword = formData.get('confirmPassword') as string;
+        const username = formData.get('username') as string;
 
         if (!isLogin && password !== confirmPassword) {
             setError('Пароли не совпадают');
@@ -45,17 +46,27 @@ export default function AuthForm() {
                 }
 
                 if (result?.ok) {
-                    router.push('/main');
+                    router.push('/');
                 }
             } else {
                 const response = await fetch('/api/auth/register', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email, password }),
+                    body: JSON.stringify({ email, password, username }),
                 });
 
+                const data = await response.json();
+
                 if (!response.ok) {
-                    const data = await response.json();
+                    if (data.error?.issues) {
+                        // Обработка ошибок валидации Zod
+                        const validationErrors = data.error.issues.map((issue: { path: string[]; message: string }) => {
+                            const field = issue.path[0];
+                            const message = issue.message;
+                            return `${field}: ${message}`;
+                        });
+                        throw new Error(validationErrors.join('\n'));
+                    }
                     throw new Error(data.error || 'Ошибка при регистрации');
                 }
 
@@ -70,7 +81,7 @@ export default function AuthForm() {
                 }
 
                 if (result?.ok) {
-                    router.push('/main');
+                    router.push('/');
                 }
             }
         } catch (err) {
@@ -90,6 +101,21 @@ export default function AuthForm() {
                 </div>
                 <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
                     <div className="rounded-md shadow-sm -space-y-px">
+                        {!isLogin && (
+                            <div>
+                                <label htmlFor="username" className="sr-only">
+                                    Псевдоним
+                                </label>
+                                <input
+                                    id="username"
+                                    name="username"
+                                    type="text"
+                                    required={!isLogin}
+                                    className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                                    placeholder="Псевдоним"
+                                />
+                            </div>
+                        )}
                         <div>
                             <label htmlFor="email" className="sr-only">
                                 Email
@@ -99,7 +125,7 @@ export default function AuthForm() {
                                 name="email"
                                 type="email"
                                 required
-                                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                                className={`appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 ${isLogin ? 'rounded-t-md' : ''} focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm`}
                                 placeholder="Email"
                             />
                         </div>
@@ -125,7 +151,7 @@ export default function AuthForm() {
                                     id="confirmPassword"
                                     name="confirmPassword"
                                     type="password"
-                                    required
+                                    required={!isLogin}
                                     className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
                                     placeholder="Подтвердите пароль"
                                 />
@@ -134,7 +160,7 @@ export default function AuthForm() {
                     </div>
 
                     {error && (
-                        <div className="text-red-500 text-sm text-center">
+                        <div className="text-red-500 text-sm text-center whitespace-pre-line">
                             {error}
                         </div>
                     )}
@@ -145,7 +171,7 @@ export default function AuthForm() {
                             disabled={loading}
                             className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
                         >
-                            {loading ? 'Обработка...' : (isLogin ? 'Войти' : 'Зарегистрироваться')}
+                            {loading ? 'Загрузка...' : isLogin ? 'Войти' : 'Зарегистрироваться'}
                         </button>
                     </div>
                 </form>

@@ -30,7 +30,7 @@ export default function Error({
                     </button>
                     <Link
                         href="/"
-                        className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-indigo-600 bg-white hover:bg-gray-50 border-indigo-600"
+                        className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-indigo-600 bg-white hover:bg-gray-50 hover:border-indigo-600"
                     >
                         Вернуться на главную
                     </Link>

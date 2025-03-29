@@ -3,10 +3,31 @@ import GitHub from "next-auth/providers/github";
 import Credentials from "next-auth/providers/credentials";
 import { prisma } from "@/lib/prisma";
 import { PrismaAdapter } from "@auth/prisma-adapter";
-import { schema } from "@/lib/schema";
+import { loginSchema } from "@/lib/schema";
+
+if (!process.env.AUTH_SECRET) {
+    throw new Error("AUTH_SECRET is not defined");
+}
+
+interface User {
+    id: string;
+    email: string;
+    username: string;
+    password: string;
+}
+
+declare module "next-auth" {
+    interface Session {
+        user: {
+            id: string;
+            name: string;
+        }
+    }
+}
 
 export const { auth, handlers, signOut, signIn } = NextAuth({
     adapter: PrismaAdapter(prisma),
+    secret: process.env.AUTH_SECRET,
     providers: [
         GitHub,
         Credentials({
@@ -20,7 +41,7 @@ export const { auth, handlers, signOut, signIn } = NextAuth({
                 }
 
                 try {
-                    const validatedCredentials = schema.parse(credentials);
+                    const validatedCredentials = loginSchema.parse(credentials);
                     const user = await prisma.user.findFirst({
                         where: {
                             email: validatedCredentials.email,
@@ -32,7 +53,7 @@ export const { auth, handlers, signOut, signIn } = NextAuth({
                         throw new Error('Неверный email или пароль');
                     }
 
-                    return user;
+                    return user as User;
                 } catch (error) {
                     console.error('Auth error:', error);
                     return null;
@@ -50,12 +71,14 @@ export const { auth, handlers, signOut, signIn } = NextAuth({
         async jwt({ token, user }) {
             if (user) {
                 token.id = user.id;
+                token.username = (user as User).username;
             }
             return token;
         },
         async session({ session, token }) {
             if (session.user) {
                 session.user.id = token.id as string;
+                session.user.name = token.username as string;
             }
             return session;
         }

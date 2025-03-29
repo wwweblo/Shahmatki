@@ -1,7 +1,7 @@
 import NextAuth from "next-auth";
 import GitHub from "next-auth/providers/github";
 import Credentials from "next-auth/providers/credentials";
-import { schema } from "@/lib/schema";
+import { loginSchema } from "@/lib/schema";
 import { v4 as uuid } from "uuid";
 import { encode } from "@auth/core/jwt";
 
@@ -15,7 +15,7 @@ export const { auth, handlers, signOut, signIn } = NextAuth({
                 password: { label: "Password", type: "password" }
             },
             authorize: async (credentials) => {
-                const validatedCredentials = schema.parse(credentials);
+                const validatedCredentials = loginSchema.parse(credentials);
                 // Здесь будет логика проверки через API
                 const response = await fetch(`${process.env.NEXTAUTH_URL}/api/auth/verify`, {
                     method: 'POST',
