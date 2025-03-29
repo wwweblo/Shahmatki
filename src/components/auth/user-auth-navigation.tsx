@@ -11,7 +11,7 @@ const UserAuth = () => {
             {session?.user ? (
                 <div className="flex items-center space-x-4">
                     <span className="text-sm text-gray-500">
-                        {session.user.email}
+                        {session.user.name}
                     </span>
                     <Button onClick={() => signOut()}>Выйти</Button>
                 </div>

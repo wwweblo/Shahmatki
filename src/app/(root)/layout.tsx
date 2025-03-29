@@ -3,7 +3,7 @@ import Header from "@/components/header";
 
 const Layout = ({children}: {children:ReactNode}) => {
   return (
-    <main>
+    <main className='flex flex-col gap-5'>
         <Header />
         {children}
     </main>

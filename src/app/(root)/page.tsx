@@ -1,56 +1,56 @@
 import Link from 'next/link';
 import { auth } from '@/lib/auth';
+import ChessBoardWrapper from '@/components/chess/ChessBoardWrapper';
 
 export default async function Home() {
     const session = await auth();
 
     return (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <main className='flex flex-col items-center'>
 
-            <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-                        <div className="max-w-7xl mx-auto">
-                            <div className="bg-white shadow rounded-lg p-6">
-                                <div className="flex justify-between items-center">
-                                    <h1 className="text-2xl font-bold text-gray-900">
-                                        Добро пожаловать, {session?.user?.email}!
-                                    </h1>
-                                </div>
-                                <div className="text-center">
-                                    <h1 className="text-4xl font-bold text-gray-900 mb-4">
-                                        Добро пожаловать в сообщество
-                                    </h1>
-                                    <p className="text-xl text-gray-500 mb-8">
-                                        Здесь вы можете читать и создавать интересные статьи
-                                    </p>
-                                    <div className="space-x-4">
-                                            <Link
-                                                href="/articles"
-                                                className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
-                                            >
-                                                Читать статьи
-                                            </Link>
-                                            {session?.user ? (
-                                                <Link
-                                                    href="/articles/new"
-                                                    className="inline-flex items-center px-6 py-3 border text-base font-medium rounded-md text-indigo-600 bg-white hover:bg-gray-50 border-indigo-600"
-                                                >
-                                                    Написать статью
-                                                </Link>
-                                            ) : (
-                                                <Link
-                                                    href="/auth"
-                                                    className="inline-flex items-center px-6 py-3 border text-base font-medium rounded-md text-indigo-600 bg-white hover:bg-gray-50 border-indigo-600"
-                                                >
-                                                    Войти, чтобы писать
-                                                </Link>
-                                            )}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+ 
+            <section className='flex flex-col items-center'>
+                <h2 className='border-b-1 border-neutral-500 pb-2 mb-2 text-xl'>
+                    Добро пожаловать, {session?.user?.name}!
+                </h2>
+                <h1 className='text-3xl'>Chess</h1>
+                <ChessBoardWrapper/>
+            </section>
 
 
-        </div>
+            <section className="text-center">
+                <h1>
+                    Добро пожаловать в сообщество
+                </h1>
+                <p className="pb-2 mb-2 text-xl">
+                    Учитесь у других
+                </p>
+                <div>
+                    <Link
+                        href="/articles"
+                        className="bg-blue-300 px-4 py-1 rounded-2xl m-3 text-black "
+                    >
+                        Читать статьи 📃
+                    </Link>
+                    {session?.user ? (
+                        <Link
+                            href="/articles/new"
+                            className=""
+                        >
+                            Написать статью
+                        </Link>
+                    ) : (
+                        <Link
+                            href="/auth"
+                            className=""
+                        >
+                            Войти, чтобы писать
+                        </Link>
+                    )}
+                </div>
+            </section>
+
+
+        </main>
     );
 } 
