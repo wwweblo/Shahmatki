@@ -5,6 +5,9 @@ import { useRouter } from 'next/navigation';
 import { Article } from '@prisma/client';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 interface ArticleEditorProps {
     article?: Article;
@@ -62,10 +65,10 @@ export default function ArticleEditor({ article, mode }: ArticleEditorProps) {
         <div className="max-w-4xl mx-auto p-4">
             <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                    <label htmlFor="title" className="block text-sm font-medium text-gray-700">
+                    <Label htmlFor="title">
                         Название
-                    </label>
-                    <input
+                    </Label>
+                    <Input
                         type="text"
                         id="title"
                         value={title}
@@ -77,86 +80,70 @@ export default function ArticleEditor({ article, mode }: ArticleEditorProps) {
 
                 <div className="flex justify-between items-center">
                     <div className="flex space-x-2">
-                        <button
-                            type="button"
+                        <Button
                             onClick={() => insertMarkdown('**$1**')}
-                            className="neutral-button"
                             title="Жирный текст"
                         >
                             B
-                        </button>
-                        <button
-                            type="button"
+                        </Button>
+                        <Button
                             onClick={() => insertMarkdown('*$1*')}
-                            className="neutral-button"
                             title="Курсив"
                         >
                             I
-                        </button>
-                        <button
-                            type="button"
+                        </Button>
+                        <Button
                             onClick={() => insertMarkdown('# $1')}
-                            className="neutral-button"
                             title="Заголовок"
                         >
                             H1
-                        </button>
-                        <button
-                            type="button"
+                        </Button>
+                        <Button
                             onClick={() => insertMarkdown('## $1')}
-                            className="neutral-button"
                             title="Подзаголовок"
                         >
                             H2
-                        </button>
-                        <button
-                            type="button"
+                        </Button>
+                        <Button
                             onClick={() => insertMarkdown('- $1')}
-                            className="neutral-button"
                             title="Список"
                         >
                             • List
-                        </button>
-                        <button
-                            type="button"
+                        </Button>
+                        <Button
                             onClick={() => insertMarkdown('1. $1')}
-                            className="neutral-button"
                             title="Нумерованный список"
                         >
                             1. List
-                        </button>
-                        <button
-                            type="button"
+                        </Button>
+                        <Button
                             onClick={() => insertMarkdown('> $1')}
-                            className="neutral-button"
                             title="Цитата"
                         >
                             {'>'} Quote
-                        </button>
-                        <button
-                            type="button"
+                        </Button>
+                        <Button
                             onClick={() => insertMarkdown('`$1`')}
-                            className="neutral-button"
                             title="Код"
                         >
                             Code
-                        </button>
-                    </div>
-                    <button
-                        type="button"
-                        onClick={() => setIsPreview(!isPreview)}
-                        className="neutral-button"
+                        </Button>
+                        <Button
+                        className='bg-blue-300 text-background'
+                        onClick={() => setIsPreview(!isPreview)} 
                     >
                         {isPreview ? 'Редактировать' : 'Предпросмотр'}
-                    </button>
+                    </Button>
+                    </div>
+                    
                 </div>
 
                 <div>
-                    <label htmlFor="content" className="block text-sm font-medium text-gray-700">
+                    <Label htmlFor="content">
                         Содержание
-                    </label>
+                    </Label>
                     {isPreview ? (
-                        <div className="mt-1 block w-full rounded-md max-w-none">
+                        <div className="mt-1 block w-full rounded-md border-1 border-neutral-300 p-2 max-w-none">
                             <ReactMarkdown remarkPlugins={[remarkGfm]}>
                                 {content}
                             </ReactMarkdown>
@@ -166,7 +153,7 @@ export default function ArticleEditor({ article, mode }: ArticleEditorProps) {
                             id="content"
                             value={content}
                             onChange={(e) => setContent(e.target.value)}
-                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                            className="mt-1 block w-full rounded-md border-1 p-2 border-gray-300 shadow-sm focus:border-blue-300 focus:ring-blue-300"
                             rows={20}
                             required
                         />
@@ -174,19 +161,17 @@ export default function ArticleEditor({ article, mode }: ArticleEditorProps) {
                 </div>
 
                 <div className="flex justify-end space-x-4">
-                    <button
+                    <Button
                         type="button"
                         onClick={() => router.push('/articles')}
-                        className="px-4 py-2 text-sm bg-gray-100 hover:bg-gray-200 rounded"
                     >
                         Отмена
-                    </button>
-                    <button
+                    </Button>
+                    <Button
                         type="submit"
-                        className="px-4 py-2 text-sm bg-indigo-600 text-white hover:bg-indigo-700 rounded"
                     >
                         {mode === 'create' ? 'Создать' : 'Сохранить'}
-                    </button>
+                    </Button>
                 </div>
             </form>
         </div>

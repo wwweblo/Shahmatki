@@ -1,8 +1,41 @@
 import Link from 'next/link';
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
+import { Pencil, Trash2 } from 'lucide-react';
+import { revalidatePath } from 'next/cache';
+import { 
+    Card,
+    CardHeader,
+    CardTitle,
+    CardDescription,
+    CardFooter 
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+
+// Добавляем серверное действие для удаления статьи
+async function deleteArticle(articleId: string) {
+  'use server'
+  
+  const session = await auth();
+  if (!session?.user) {
+    return;
+  }
+
+  const article = await prisma.article.findUnique({
+    where: { id: articleId },
+    select: { authorId: true }
+  });
+
+  if (article?.authorId !== session.user.id) {
+    return;
+  }
+
+  await prisma.article.delete({
+    where: { id: articleId }
+  });
+
+  revalidatePath('/articles');
+}
 
 export default async function ArticlesPage() {
     const session = await auth();
@@ -12,6 +45,7 @@ export default async function ArticlesPage() {
                 select: {
                     id: true,
                     email: true,
+                    username: true,
                 },
             },
         },
@@ -21,75 +55,70 @@ export default async function ArticlesPage() {
     });
 
     return (
-        <div className="max-w-4xl mx-auto py-8">
+        <div className="w-[90%] mx-auto py-8 px-4">
             <div className="flex justify-between items-center mb-8">
-                <h1 className="text-3xl font-bold text-gray-900">Статьи</h1>
+                <h1 className="text-3xl font-bold">Статьи</h1>
                 {session?.user && (
-                    <Link
-                        href="/articles/new"
-                        className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700"
-                    >
-                        Написать статью
-                    </Link>
+                    <Button asChild>
+                        <Link href="/articles/new">
+                            Написать статью
+                        </Link>
+                    </Button>
                 )}
             </div>
 
-            <div className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                 {articles.map((article) => (
-                    <article
-                        key={article.id}
-                        className="bg-white shadow rounded-lg p-6"
-                    >
-                        <div className="flex justify-between items-start">
-                            <div>
+                    <Card key={article.id}>
+                        <CardHeader className='!gap-4'>
+                            <CardTitle>
                                 <Link
                                     href={`/articles/${article.id}`}
-                                    className="text-xl font-semibold text-gray-900 hover:text-indigo-600"
+                                    className="hover:text-indigo-600 transition-colors"
                                 >
                                     {article.title}
                                 </Link>
-                                <p className="mt-1 text-sm text-gray-500">
-                                    Автор:{' '}
-                                    <Link
-                                        href={`/authors/${article.author.id}`}
-                                        className="text-indigo-600 hover:text-indigo-800"
-                                    >
-                                        {article.author.email || 'Аноним'}
-                                    </Link>{' '}
-                                    • {new Date(article.createdAt).toLocaleDateString('ru-RU')}
-                                </p>
-                            </div>
-                            {session?.user?.id === article.author.id && (
-                                <div className="flex space-x-2">
-                                    <Link
-                                        href={`/articles/${article.id}/edit`}
-                                        className="text-sm text-indigo-600 hover:text-indigo-800"
-                                    >
-                                        Редактировать
-                                    </Link>
-                                    <form
-                                        action={`/api/articles/${article.id}`}
-                                        method="DELETE"
-                                        className="inline"
-                                    >
-                                        <button
-                                            type="submit"
-                                            className="text-sm text-red-600 hover:text-red-800"
+                            </CardTitle>
+                            <CardDescription>
+                                <Link
+                                    href={`/authors/${article.author.id}`}
+                                    className="bg-blue-300 text-background px-2 py-1 rounded-full"
+                                >
+                                    {article.author.username || 'Аноним'}
+                                </Link>{' '}
+                                • {new Date(article.createdAt).toLocaleDateString('ru-RU')}
+                            </CardDescription>
+                            </CardHeader>
+                            <CardFooter className='justify-start'>
+                                {session?.user?.id === article.author.id && (
+                                    <>
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            asChild
                                         >
-                                            Удалить
-                                        </button>
-                                    </form>
-                                </div>
-                            )}
-                        </div>
-                        <div className="mt-4 prose prose-sm max-w-none">
-                            <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                                {`${article.content.slice(0, 200)}${
-                                    article.content.length > 200 ? '...' : ''
-                                }`}
-                            </ReactMarkdown>
-                        </div>
-                    </article>
+                                            <Link href={`/articles/${article.id}/edit`}>
+                                                <Pencil className="w-4 h-4" />
+                                            </Link>
+                                        </Button>
+                                        <form
+                                            action={async () => {
+                                                'use server'
+                                                await deleteArticle(article.id);
+                                            }}
+                                        >
+                                            <Button
+                                                type="submit"
+                                                variant="ghost"
+                                                size="icon"
+                                            >
+                                                <Trash2 className="w-4 h-4" />
+                                            </Button>
+                                        </form>
+                                    </>
+                                )}
+                            </CardFooter>
+                    </Card>
                 ))}
             </div>
         </div>

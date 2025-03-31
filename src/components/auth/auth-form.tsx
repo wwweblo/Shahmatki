@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react';
 import { signIn } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 
 export default function AuthForm() {
     const router = useRouter();
@@ -92,26 +94,25 @@ export default function AuthForm() {
     }
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+        <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
             <div className="max-w-md w-full space-y-8">
                 <div>
-                    <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+                    <h2>
                         {isLogin ? 'Вход в аккаунт' : 'Создание аккаунта'}
                     </h2>
                 </div>
                 <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-                    <div className="rounded-md shadow-sm -space-y-px">
+                    <div className="rounded-md shadow-sm space-y-px">
                         {!isLogin && (
                             <div>
                                 <label htmlFor="username" className="sr-only">
                                     Псевдоним
                                 </label>
-                                <input
+                                <Input
                                     id="username"
                                     name="username"
                                     type="text"
                                     required={!isLogin}
-                                    className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
                                     placeholder="Псевдоним"
                                 />
                             </div>
@@ -120,12 +121,11 @@ export default function AuthForm() {
                             <label htmlFor="email" className="sr-only">
                                 Email
                             </label>
-                            <input
+                            <Input
                                 id="email"
                                 name="email"
                                 type="email"
                                 required
-                                className={`appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 ${isLogin ? 'rounded-t-md' : ''} focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm`}
                                 placeholder="Email"
                             />
                         </div>
@@ -133,12 +133,11 @@ export default function AuthForm() {
                             <label htmlFor="password" className="sr-only">
                                 Пароль
                             </label>
-                            <input
+                            <Input
                                 id="password"
                                 name="password"
                                 type="password"
-                                required
-                                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                                required 
                                 placeholder="Пароль"
                             />
                         </div>
@@ -147,12 +146,11 @@ export default function AuthForm() {
                                 <label htmlFor="confirmPassword" className="sr-only">
                                     Подтвердите пароль
                                 </label>
-                                <input
+                                <Input
                                     id="confirmPassword"
                                     name="confirmPassword"
                                     type="password"
                                     required={!isLogin}
-                                    className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
                                     placeholder="Подтвердите пароль"
                                 />
                             </div>
@@ -160,34 +158,33 @@ export default function AuthForm() {
                     </div>
 
                     {error && (
-                        <div className="text-red-500 text-sm text-center whitespace-pre-line">
+                        <div className="border-red-400 border-1 py-2 rounded-full text-sm text-center whitespace-pre-line">
                             {error}
                         </div>
                     )}
 
                     <div>
-                        <button
+                        <Button
                             type="submit"
                             disabled={loading}
-                            className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
                         >
                             {loading ? 'Загрузка...' : isLogin ? 'Войти' : 'Зарегистрироваться'}
-                        </button>
+                        </Button>
                     </div>
                 </form>
 
                 <div className="text-center">
-                    <button
+                    <Button
                         type="button"
+                        variant="link"
                         onClick={() => {
                             const newIsLogin = !isLogin;
                             setIsLogin(newIsLogin);
                             router.push(newIsLogin ? '/auth' : '/auth?register=true');
                         }}
-                        className="text-indigo-600 hover:text-indigo-500 text-sm"
                     >
                         {isLogin ? 'Нет аккаунта? Зарегистрироваться' : 'Уже есть аккаунт? Войти'}
-                    </button>
+                    </Button>
                 </div>
             </div>
         </div>

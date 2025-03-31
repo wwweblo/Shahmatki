@@ -25,23 +25,24 @@ export default async function Home() {
                         <CardDescription>
                             Учитесь у других
                         </CardDescription>
-                    </CardHeader>
-                    <CardFooter className='flex flex-col gap-2'>
-                        <Button variant="link" className='bg-blue-300 text-background'>
-                            <Link href='/articles'>Читать статьи</Link> 
-                        </Button>
-                        {session?.user ? (
-                            <Button variant="link"
-                            >
-                                <Link href='/articles/new'>Написать статью</Link>
+                        </CardHeader>
+                        <CardFooter className='flex flex-col gap-2'>
+                            <Button variant="link" className='bg-blue-300 text-background'>
+                                <Link href='/articles'>Читать статьи</Link> 
                             </Button>
-                        ) : (
-                            <Button
-                            >
-                                <Link href='/login'>Войти, чтобы писать</Link>
-                            </Button>
-                        )}
-                    </CardFooter>
+                            {session?.user ? (
+                                <Button variant="link"
+                                >
+                                    <Link href='/articles/new'>Написать статью</Link>
+                                </Button>
+                            ) : (
+                                <Button
+                                >
+                                    <Link href='/auth'>Войти, чтобы писать</Link>
+                                </Button>
+                            )}
+                        </CardFooter>
+                    
                 </Card>
 
                 <Card>
