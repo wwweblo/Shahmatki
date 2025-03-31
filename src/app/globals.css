@@ -8,7 +8,9 @@
 
 @theme inline {
   --color-background: var(--background);
+  --color-background-secondary: var(--background-secondary);
   --color-foreground: var(--foreground);
+  --color-foreground-secondary: var(--foreground-secondary);
   --font-sans: 'sans-serif';
   --font-mono: 'monospace';
   --color-sidebar-ring: var(--sidebar-ring);
@@ -48,8 +50,10 @@
 
 :root {
   --radius: 0.625rem;
-  --background: oklch(1 0 0);
+  --background: #ffffff;
+  --background-secondary: #f5f5f7;
   --foreground: oklch(0.145 0 0);
+  --foreground-secondary: #6e6e73;
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
@@ -83,7 +87,9 @@
 
 .dark {
   --background: oklch(0.145 0 0);
+  --background-secondary: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);
+  --foreground-secondary: #929292;
   --card: oklch(0.205 0 0);
   --card-foreground: oklch(0.985 0 0);
   --popover: oklch(0.205 0 0);
@@ -123,10 +129,16 @@
     @apply bg-background text-foreground;
   }
   h1{
-    @apply font-bold text-2xl;
+    @apply text-5xl font-bold ;
+  }
+  h2{
+    @apply text-2xl font-bold ;
+  }
+  h3{
+    @apply text-xl font-bold ;
   }
   button{
-    @apply bg-black text-white px-4 py-1 rounded hover:bg-neutral-800 transition-[0.3s] cursor-pointer;
+    @apply cursor-pointer;
   }
 }
 
