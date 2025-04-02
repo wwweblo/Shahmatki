@@ -90,4 +90,6 @@ model Article {
   updatedAt DateTime @updatedAt
   authorId  String
   author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  fenPosition String?
+  hasChessBoard Boolean @default(false)
 }

@@ -1,7 +1,6 @@
 import Link from 'next/link';
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
-import { Pencil, Trash2 } from 'lucide-react';
 import { revalidatePath } from 'next/cache';
 import { 
     Card,
@@ -11,6 +10,8 @@ import {
     CardFooter 
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { SearchForm } from '@/components/SearchForm';
+import { ArticleActions } from '@/components/ArticleActions';
 
 // Добавляем серверное действие для удаления статьи
 async function deleteArticle(articleId: string) {
@@ -37,9 +38,24 @@ async function deleteArticle(articleId: string) {
   revalidatePath('/articles');
 }
 
-export default async function ArticlesPage() {
+interface ArticlesPageProps {
+    searchParams: {
+        search?: string;
+    };
+}
+
+export default async function ArticlesPage({ searchParams }: ArticlesPageProps) {
     const session = await auth();
+    const search = searchParams?.search || '';
+
     const articles = await prisma.article.findMany({
+        where: {
+            OR: [
+                { title: { contains: search } },
+                { author: { username: { contains: search } } },
+                { author: { email: { contains: search } } }
+            ]
+        },
         include: {
             author: {
                 select: {
@@ -67,6 +83,10 @@ export default async function ArticlesPage() {
                 )}
             </div>
 
+            <div className="mb-8">
+                <SearchForm defaultValue={search} />
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {articles.map((article) => (
                     <Card key={article.id}>
@@ -90,33 +110,11 @@ export default async function ArticlesPage() {
                             </CardDescription>
                             </CardHeader>
                             <CardFooter className='justify-start'>
-                                {session?.user?.id === article.author.id && (
-                                    <>
-                                        <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            asChild
-                                        >
-                                            <Link href={`/articles/${article.id}/edit`}>
-                                                <Pencil className="w-4 h-4" />
-                                            </Link>
-                                        </Button>
-                                        <form
-                                            action={async () => {
-                                                'use server'
-                                                await deleteArticle(article.id);
-                                            }}
-                                        >
-                                            <Button
-                                                type="submit"
-                                                variant="ghost"
-                                                size="icon"
-                                            >
-                                                <Trash2 className="w-4 h-4" />
-                                            </Button>
-                                        </form>
-                                    </>
-                                )}
+                                <ArticleActions
+                                    articleId={article.id}
+                                    isAuthor={session?.user?.id === article.author.id}
+                                    onDelete={deleteArticle}
+                                />
                             </CardFooter>
                     </Card>
                 ))}

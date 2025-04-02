@@ -5,6 +5,7 @@ import Link from 'next/link';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Button } from '@/components/ui/button';
+import { EditButtons } from './EditButtons';
 
 interface Article {
     id: string;
@@ -20,31 +21,28 @@ interface Article {
 interface ArticleEditorProps {
     article: Article;
     isAuthor: boolean;
+    onSave: (content: string) => void;
+    onCancel: () => void;
 }
 
-export function ArticleEditor({ article, isAuthor }: ArticleEditorProps) {
+export function ArticleEditor({ article, isAuthor, onSave, onCancel }: ArticleEditorProps) {
     const [isEditing, setIsEditing] = useState(false);
-    const [title, setTitle] = useState(article.title);
-    const [content, setContent] = useState(article.content);
+    const [editedContent, setEditedContent] = useState(article.content);
+    const [isPreview, setIsPreview] = useState(false);
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        try {
-            const response = await fetch(`/api/articles/${article.id}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ title, content }),
-            });
+    const handleEdit = () => {
+        setIsEditing(true);
+    };
 
-            if (response.ok) {
-                setIsEditing(false);
-                window.location.reload();
-            }
-        } catch (error) {
-            console.error('Error updating article:', error);
-        }
+    const handleSave = () => {
+        onSave(editedContent);
+        setIsEditing(false);
+    };
+
+    const handleCancel = () => {
+        setEditedContent(article.content);
+        setIsEditing(false);
+        onCancel();
     };
 
     const handleDelete = async () => {
@@ -63,58 +61,133 @@ export function ArticleEditor({ article, isAuthor }: ArticleEditorProps) {
         }
     };
 
+    const insertMarkdown = (markdown: string) => {
+        const textarea = document.querySelector('textarea') as HTMLTextAreaElement;
+        if (!textarea) return;
+
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        const selectedText = editedContent.substring(start, end);
+        
+        let newText = editedContent;
+        if (selectedText) {
+            newText = editedContent.substring(0, start) + markdown.replace('$1', selectedText) + editedContent.substring(end);
+        } else {
+            newText = editedContent.substring(0, start) + markdown + editedContent.substring(start);
+        }
+
+        setEditedContent(newText);
+        setTimeout(() => {
+            textarea.focus();
+            textarea.setSelectionRange(start + markdown.length, start + markdown.length);
+        }, 0);
+    };
+
     if (isEditing) {
         return (
-            <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                    <label htmlFor="title" className="block text-sm font-medium text-gray-700">
-                        Заголовок
-                    </label>
-                    <input
-                        type="text"
-                        id="title"
-                        value={title}
-                        onChange={(e) => setTitle(e.target.value)}
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                        required
-                    />
+            <div className="space-y-4">
+                <div className="flex flex-wrap gap-2">
+                    <Button
+                        onClick={() => insertMarkdown('**$1**')}
+                        title="Жирный текст"
+                        variant="outline"
+                        size="sm"
+                    >
+                        B
+                    </Button>
+                    <Button
+                        onClick={() => insertMarkdown('*$1*')}
+                        title="Курсив"
+                        variant="outline"
+                        size="sm"
+                    >
+                        I
+                    </Button>
+                    <Button
+                        onClick={() => insertMarkdown('# $1')}
+                        title="Заголовок"
+                        variant="outline"
+                        size="sm"
+                    >
+                        H1
+                    </Button>
+                    <Button
+                        onClick={() => insertMarkdown('## $1')}
+                        title="Подзаголовок"
+                        variant="outline"
+                        size="sm"
+                    >
+                        H2
+                    </Button>
+                    <Button
+                        onClick={() => insertMarkdown('- $1')}
+                        title="Список"
+                        variant="outline"
+                        size="sm"
+                    >
+                        • List
+                    </Button>
+                    <Button
+                        onClick={() => insertMarkdown('1. $1')}
+                        title="Нумерованный список"
+                        variant="outline"
+                        size="sm"
+                    >
+                        1. List
+                    </Button>
+                    <Button
+                        onClick={() => insertMarkdown('> $1')}
+                        title="Цитата"
+                        variant="outline"
+                        size="sm"
+                    >
+                        {'>'} Quote
+                    </Button>
+                    <Button
+                        onClick={() => insertMarkdown('`$1`')}
+                        title="Код"
+                        variant="outline"
+                        size="sm"
+                    >
+                        Code
+                    </Button>
+                    <Button
+                        onClick={() => setIsPreview(!isPreview)}
+                        variant="outline"
+                        size="sm"
+                        className="bg-blue-300 text-foreground"
+                    >
+                        {isPreview ? 'Редактировать' : 'Предпросмотр'}
+                    </Button>
                 </div>
-                <div>
-                    <label htmlFor="content" className="block text-sm font-medium text-gray-700">
-                        Содержание
-                    </label>
+
+                {isPreview ? (
+                    <div className="prose max-w-none p-4 border rounded">
+                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                            {editedContent}
+                        </ReactMarkdown>
+                    </div>
+                ) : (
                     <textarea
-                        id="content"
-                        value={content}
-                        onChange={(e) => setContent(e.target.value)}
-                        rows={20}
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                        required
+                        value={editedContent}
+                        onChange={(e) => setEditedContent(e.target.value)}
+                        className="w-full h-64 p-4 border rounded"
                     />
-                </div>
-                <div className="flex justify-end space-x-2">
-                    <button
-                        type="button"
-                        onClick={() => setIsEditing(false)}
-                        className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
-                    >
-                        Отмена
-                    </button>
-                    <button
-                        type="submit"
-                        className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md hover:bg-indigo-700"
-                    >
-                        Сохранить
-                    </button>
-                </div>
-            </form>
+                )}
+
+                <EditButtons
+                    onEdit={handleEdit}
+                    onSave={handleSave}
+                    onCancel={handleCancel}
+                    isEditing={isEditing}
+                />
+            </div>
         );
     }
 
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-start">
-
                 <div>
                     <Link
                         href="/articles"
@@ -135,12 +208,10 @@ export function ArticleEditor({ article, isAuthor }: ArticleEditorProps) {
                     </p>
                 </div>
                 <div className="flex space-x-2">
-
                     {isAuthor && (
                         <>
                             <Button
-                                onClick={() => setIsEditing(true)}
-                                
+                                onClick={handleEdit}
                             >
                                 Редактировать
                             </Button>
@@ -157,7 +228,7 @@ export function ArticleEditor({ article, isAuthor }: ArticleEditorProps) {
 
             <div className="prose max-w-none">
                 <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                    {article.content}
+                    {editedContent}
                 </ReactMarkdown>
             </div>
         </div>

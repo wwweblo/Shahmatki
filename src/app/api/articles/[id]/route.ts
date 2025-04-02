@@ -2,92 +2,87 @@ import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 
-export async function GET(
-    request: Request,
-    { params }: { params: { id: string } }
-) {
+interface ArticleRouteProps {
+    params: {
+        id: string;
+    };
+}
+
+export async function GET(request: Request, { params }: ArticleRouteProps) {
     try {
+        const session = await auth();
+        if (!session?.user) {
+            return new NextResponse('Unauthorized', { status: 401 });
+        }
+
         const article = await prisma.article.findUnique({
             where: { id: params.id },
             include: {
                 author: {
                     select: {
-                        name: true,
+                        id: true,
+                        email: true,
                     },
                 },
             },
         });
 
         if (!article) {
-            return NextResponse.json(
-                { error: 'Статья не найдена' },
-                { status: 404 }
-            );
+            return new NextResponse('Article not found', { status: 404 });
+        }
+
+        if (article.authorId !== session.user.id) {
+            return new NextResponse('Forbidden', { status: 403 });
         }
 
         return NextResponse.json(article);
     } catch (error) {
-        console.error('Ошибка при получении статьи:', error);
-        return NextResponse.json(
-            { error: 'Ошибка при получении статьи' },
-            { status: 500 }
-        );
+        console.error('Error:', error);
+        return new NextResponse('Internal Server Error', { status: 500 });
     }
 }
 
-export async function PUT(
-    request: Request,
-    { params }: { params: { id: string } }
-) {
+export async function PUT(request: Request, { params }: ArticleRouteProps) {
     try {
         const session = await auth();
-        if (!session?.user?.email) {
-            return NextResponse.json(
-                { error: 'Не авторизован' },
-                { status: 401 }
-            );
+        if (!session?.user) {
+            return new NextResponse('Unauthorized', { status: 401 });
         }
 
         const article = await prisma.article.findUnique({
             where: { id: params.id },
-            include: { author: true },
+            select: { authorId: true },
         });
 
         if (!article) {
-            return NextResponse.json(
-                { error: 'Статья не найдена' },
-                { status: 404 }
-            );
+            return new NextResponse('Article not found', { status: 404 });
         }
 
-        if (article.author.email !== session.user.email) {
-            return NextResponse.json(
-                { error: 'Нет прав на редактирование этой статьи' },
-                { status: 403 }
-            );
+        if (article.authorId !== session.user.id) {
+            return new NextResponse('Forbidden', { status: 403 });
         }
 
-        const { title, content } = await request.json();
+        const body = await request.json();
+        const { title, content, fenPosition, hasChessBoard } = body;
 
         if (!title || !content) {
-            return NextResponse.json(
-                { error: 'Заголовок и содержание обязательны' },
-                { status: 400 }
-            );
+            return new NextResponse('Missing required fields', { status: 400 });
         }
 
         const updatedArticle = await prisma.article.update({
             where: { id: params.id },
-            data: { title, content },
+            data: {
+                title,
+                content,
+                fenPosition,
+                hasChessBoard,
+            },
         });
 
         return NextResponse.json(updatedArticle);
     } catch (error) {
-        console.error('Ошибка при обновлении статьи:', error);
-        return NextResponse.json(
-            { error: 'Ошибка при обновлении статьи' },
-            { status: 500 }
-        );
+        console.error('Error:', error);
+        return new NextResponse('Internal Server Error', { status: 500 });
     }
 }
 

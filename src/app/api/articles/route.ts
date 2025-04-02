@@ -8,7 +8,9 @@ export async function GET() {
             include: {
                 author: {
                     select: {
-                        name: true,
+                        id: true,
+                        email: true,
+                        username: true,
                     },
                 },
             },
@@ -20,57 +22,37 @@ export async function GET() {
         return NextResponse.json(articles);
     } catch (error) {
         console.error('Ошибка при получении статей:', error);
-        return NextResponse.json(
-            { error: 'Ошибка при получении статей' },
-            { status: 500 }
-        );
+        return new NextResponse('Внутренняя ошибка сервера', { status: 500 });
     }
 }
 
 export async function POST(request: Request) {
     try {
         const session = await auth();
-        if (!session?.user?.email) {
-            return NextResponse.json(
-                { error: 'Не авторизован' },
-                { status: 401 }
-            );
+        if (!session?.user) {
+            return new NextResponse('Необходима авторизация', { status: 401 });
         }
 
-        const { title, content } = await request.json();
+        const body = await request.json();
+        const { title, content, fenPosition, hasChessBoard } = body;
 
         if (!title || !content) {
-            return NextResponse.json(
-                { error: 'Заголовок и содержание обязательны' },
-                { status: 400 }
-            );
-        }
-
-        const user = await prisma.user.findUnique({
-            where: { email: session.user.email },
-        });
-
-        if (!user) {
-            return NextResponse.json(
-                { error: 'Пользователь не найден' },
-                { status: 404 }
-            );
+            return new NextResponse('Заголовок и содержание обязательны', { status: 400 });
         }
 
         const article = await prisma.article.create({
             data: {
                 title,
                 content,
-                authorId: user.id,
+                authorId: session.user.id,
+                fenPosition: hasChessBoard ? fenPosition : null,
+                hasChessBoard,
             },
         });
 
         return NextResponse.json(article);
     } catch (error) {
         console.error('Ошибка при создании статьи:', error);
-        return NextResponse.json(
-            { error: 'Ошибка при создании статьи' },
-            { status: 500 }
-        );
+        return new NextResponse('Внутренняя ошибка сервера', { status: 500 });
     }
 } 
