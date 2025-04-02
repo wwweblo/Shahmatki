@@ -67,14 +67,14 @@ export default async function ArticlesPage() {
                 )}
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {articles.map((article) => (
                     <Card key={article.id}>
                         <CardHeader className='!gap-4'>
                             <CardTitle>
                                 <Link
                                     href={`/articles/${article.id}`}
-                                    className="hover:text-indigo-600 transition-colors"
+                                    className="hover:text-blue-300 transition-colors"
                                 >
                                     {article.title}
                                 </Link>

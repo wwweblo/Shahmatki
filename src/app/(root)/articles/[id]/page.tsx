@@ -29,7 +29,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
     const isAuthor = session?.user?.email === article.author.email;
 
     return (
-        <div className="max-w-4xl mx-auto py-8">
+        <div className="py-8 px-3 md:max-w-[90%] md:mx-auto">
             <ArticleEditor article={{...article, author: {...article.author, id: article.authorId}}} isAuthor={isAuthor} />
         </div>
     );

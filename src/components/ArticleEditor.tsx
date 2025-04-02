@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { Button } from '@/components/ui/button';
 
 interface Article {
     id: string;
@@ -113,13 +114,20 @@ export function ArticleEditor({ article, isAuthor }: ArticleEditorProps) {
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-start">
+
                 <div>
-                    <h1 className="text-3xl font-bold text-gray-900">{article.title}</h1>
+                    <Link
+                        href="/articles"
+                        className="bg-blue-300 text-background px-2 py-1 rounded-full"
+                    >
+                        ← Назад к списку
+                    </Link>
+                    <h1>{article.title}</h1>
                     <p className="mt-2 text-sm text-gray-500">
                         Автор:{' '}
                         <Link
                             href={`/authors/${article.author.id}`}
-                            className="text-indigo-600 hover:text-indigo-800"
+                            className="text-blue-300 hover:underline"
                         >
                             {article.author.email || 'Аноним'}
                         </Link>{' '}
@@ -127,26 +135,21 @@ export function ArticleEditor({ article, isAuthor }: ArticleEditorProps) {
                     </p>
                 </div>
                 <div className="flex space-x-2">
-                    <Link
-                        href="/articles"
-                        className="text-sm text-indigo-600 hover:text-indigo-800"
-                    >
-                        ← Назад к списку
-                    </Link>
+
                     {isAuthor && (
                         <>
-                            <button
+                            <Button
                                 onClick={() => setIsEditing(true)}
-                                className="text-sm text-indigo-600 hover:text-indigo-800"
+                                
                             >
                                 Редактировать
-                            </button>
-                            <button
+                            </Button>
+                            <Button
                                 onClick={handleDelete}
-                                className="text-sm text-red-600 hover:text-red-800"
+                                variant="destructive"
                             >
                                 Удалить
-                            </button>
+                            </Button>
                         </>
                     )}
                 </div>

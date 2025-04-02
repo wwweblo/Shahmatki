@@ -15,6 +15,7 @@ wss.on("connection", (ws, req) => {
     const url = new URL(req.url, `http://${req.headers.host}`);
     const roomId = url.searchParams.get("roomId");
     const playerId = url.searchParams.get("playerId");
+    const preferredColor = url.searchParams.get("preferredColor");
 
     if (!roomId || !playerId) {
       console.warn("❌ Отклонено подключение: отсутствуют roomId или playerId.");
@@ -29,17 +30,32 @@ wss.on("connection", (ws, req) => {
         players: {},
         moveHistory: [],
         clients: new Set(),
-        gameStarted: false
+        gameStarted: false,
+        creatorPreference: preferredColor || 'random'
       };
     }
 
     const room = rooms[roomId];
     room.clients.add(ws);
 
-    if (!room.players.white) {
-      room.players.white = playerId;
-    } else if (!room.players.black && room.players.white !== playerId) {
-      room.players.black = playerId;
+    if (!room.players.white && !room.players.black) {
+      if (room.creatorPreference === 'white') {
+        room.players.white = playerId;
+      } else if (room.creatorPreference === 'black') {
+        room.players.black = playerId;
+      } else {
+        if (Math.random() < 0.5) {
+          room.players.white = playerId;
+        } else {
+          room.players.black = playerId;
+        }
+      }
+    } else {
+      if (!room.players.white) {
+        room.players.white = playerId;
+      } else if (!room.players.black) {
+        room.players.black = playerId;
+      }
       room.gameStarted = true;
     }
 

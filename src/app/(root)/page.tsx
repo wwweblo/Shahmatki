@@ -59,7 +59,7 @@ export default async function Home() {
                             <Link href='/play/bot'>Играть с ботом</Link> 
                         </Button>
                         <Button variant="link" className='bg-blue-300 text-background'>
-                            <Link href='/articles'>Играть с ботом</Link> 
+                            <Link href='/play/online'>Играть с другом</Link> 
                         </Button>
                         
                     </CardFooter>

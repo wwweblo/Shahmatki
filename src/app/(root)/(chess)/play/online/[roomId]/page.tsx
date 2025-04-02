@@ -1,14 +1,17 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import { Chess } from "chess.js";
 import { Chessboard } from "react-chessboard";
 import { v4 as uuidv4 } from "uuid";
+import { Button } from "@/components/ui/button";
 
 export default function GamePage() {
   const params = useParams();
+  const searchParams = useSearchParams();
   const roomId = params.roomId as string;
+  const preferredColor = searchParams.get('preferredColor');
 
   const [playerId, setPlayerId] = useState<string | null>(null);
   const [game, setGame] = useState(new Chess());
@@ -61,7 +64,7 @@ export default function GamePage() {
     if (!roomId || !playerId) return;
 
     const wsProtocol = typeof window !== "undefined" && window.location.protocol === "https:" ? "wss" : "ws";
-    const wsUrl = `${wsProtocol}://${typeof window !== "undefined" ? window.location.hostname : "localhost"}:4000?roomId=${roomId}&playerId=${playerId}`;
+    const wsUrl = `${wsProtocol}://${typeof window !== "undefined" ? window.location.hostname : "localhost"}:4000?roomId=${roomId}&playerId=${playerId}&preferredColor=${preferredColor}`;
 
     console.log(`🔌 Подключение к WebSocket: ${wsUrl}`);
 
@@ -119,7 +122,7 @@ export default function GamePage() {
     };
 
     return () => socket.close();
-  }, [roomId, playerId]);
+  }, [roomId, playerId, preferredColor]);
 
   const makeMove = (move: any) => {
     if (!wsRef.current || isSpectator || game.turn() !== playerColor?.[0]) return;
@@ -149,17 +152,16 @@ export default function GamePage() {
   if (waitingForOpponent) {
     return (
       <div className="flex flex-col items-center justify-center h-screen text-center">
-        <h1 className="text-2xl font-bold text-white">Ожидание второго игрока...</h1>
+        <h1>Ожидание второго игрока...</h1>
         <p className="text-gray-600 mt-2">Отправьте ссылку другу, чтобы он присоединился!</p>
         {gameUrl && (
-          <div className="mt-4">
-            <p className="bg-gray-200 p-2 rounded">{gameUrl}</p>
-            <button
+          <div className="flex flex-col items-center justify-center gap-2">
+            <p className="bg-neutral-200 dark:bg-neutral-800 p-2 rounded">{gameUrl}</p>
+            <Button
               onClick={() => navigator.clipboard.writeText(gameUrl)}
-              className="mt-2 bg-blue-500 text-white px-4 py-2 rounded"
             >
               Скопировать ссылку
-            </button>
+            </Button>
           </div>
         )}
       </div>
@@ -175,7 +177,7 @@ export default function GamePage() {
       )}
       
       <div className="mb-4 text-center">
-        <h1 className="text-white text-4xl font-bold">
+        <h1>
           {isSpectator 
             ? "Вы зритель" 
             : gameStarted 
