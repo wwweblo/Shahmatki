@@ -26,7 +26,6 @@ const AnalisisPage = () => {
   const [evaluation, setEvaluation] = useState(0)
   const [depth, setDepth] = useState(0)
   const [bestMove, setBestMove] = useState<string | null>(null)
-  const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [showAnalysis, setShowAnalysis] = useState(true)
   const [moveHistory, setMoveHistory] = useState<string[]>([])
   const [currentMoveIndex, setCurrentMoveIndex] = useState(-1)
@@ -47,7 +46,6 @@ const AnalisisPage = () => {
   const analyzePosition = useCallback(() => {
     if (!stockfish || !showAnalysis) return
 
-    setIsAnalyzing(true)
     stockfish.postMessage(`position fen ${game.fen()}`)
     stockfish.postMessage('go depth 18')
 
@@ -57,7 +55,6 @@ const AnalisisPage = () => {
       if (response.includes('bestmove')) {
         const move = response.split('bestmove ')[1].split(' ')[0]
         setBestMove(move)
-        setIsAnalyzing(false)
       } else if (response.includes('score cp')) {
         const match = response.match(/score cp (-?\d+)/)
         if (match) {
@@ -153,10 +150,11 @@ const AnalisisPage = () => {
   }
 
   const handleFenInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { valid } = game.validate_fen(e.target.value)
-    if (valid) {
+    try {
       game.load(e.target.value)
       checkPosition(game.fen())
+    } catch (error) {
+      console.error('Error loading FEN:', error)
     }
   }
 

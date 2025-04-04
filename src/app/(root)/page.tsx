@@ -64,6 +64,22 @@ export default async function Home() {
                         
                     </CardFooter>
                 </Card>
+
+                <Card>
+                    <CardHeader>
+                        <CardTitle className='text-2xl leading-none'>
+                            Узнайте больше о опзиции
+                        </CardTitle>
+                        <CardDescription>
+                            Ее название и оценка 
+                        </CardDescription>
+                    </CardHeader>
+                    <CardFooter className='flex flex-col gap-2'>
+                        <Button variant="link" className='bg-blue-300 text-background'>
+                            <Link href='/analisis'>Оценить позицию</Link> 
+                        </Button>
+                    </CardFooter>
+                </Card>
             </section>
         </main>
     );
