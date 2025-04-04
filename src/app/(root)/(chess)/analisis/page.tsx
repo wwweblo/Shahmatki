@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useCallback, useRef } from 'react'
 import { Chessboard } from 'react-chessboard'
-import { Chess } from 'chess.js'
+import { Chess, Square } from 'chess.js'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -28,6 +28,8 @@ const AnalisisPage = () => {
   const [bestMove, setBestMove] = useState<string | null>(null)
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [showAnalysis, setShowAnalysis] = useState(true)
+  const [moveHistory, setMoveHistory] = useState<string[]>([])
+  const [currentMoveIndex, setCurrentMoveIndex] = useState(-1)
   const inputRef = useRef<HTMLInputElement>(null)
 
   // Инициализация Stockfish
@@ -92,11 +94,37 @@ const AnalisisPage = () => {
 
       if (move === null) return false
       setGame(gameCopy)
+      setMoveHistory(prev => [...prev, move.san])
+      setCurrentMoveIndex(prev => prev + 1)
       checkPosition(gameCopy.fen())
       return true
     } catch {
       return false
     }
+  }
+
+  const undoMove = () => {
+    if (currentMoveIndex < 0) return
+    
+    const gameCopy = new Chess()
+    for (let i = 0; i < currentMoveIndex; i++) {
+      gameCopy.move(moveHistory[i])
+    }
+    setGame(gameCopy)
+    setCurrentMoveIndex(prev => prev - 1)
+    checkPosition(gameCopy.fen())
+  }
+
+  const redoMove = () => {
+    if (currentMoveIndex >= moveHistory.length - 1) return
+    
+    const gameCopy = new Chess()
+    for (let i = 0; i <= currentMoveIndex + 1; i++) {
+      gameCopy.move(moveHistory[i])
+    }
+    setGame(gameCopy)
+    setCurrentMoveIndex(prev => prev + 1)
+    checkPosition(gameCopy.fen())
   }
 
   const checkPosition = async (fen: string) => {
@@ -119,6 +147,8 @@ const AnalisisPage = () => {
 
   const resetBoard = () => {
     setGame(new Chess())
+    setMoveHistory([])
+    setCurrentMoveIndex(-1)
     checkPosition('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1')
   }
 
@@ -157,8 +187,8 @@ const AnalisisPage = () => {
               onPieceDrop={onPieceDrop}
               boardWidth={500}
               customArrows={bestMove ? [[
-                bestMove.substring(0, 2) as any,
-                bestMove.substring(2, 4) as any,
+                bestMove.substring(0, 2) as Square,
+                bestMove.substring(2, 4) as Square,
                 'rgb(0, 128, 0)'
               ]] : undefined}
             />
@@ -175,6 +205,42 @@ const AnalisisPage = () => {
             />
           </div>
 
+          <div className="flex flex-col gap-2">
+            <Label>PGN партии:</Label>
+            <div className="p-2 bg-muted rounded font-mono text-sm">
+              {moveHistory.length > 0 ? moveHistory.join(' ') : 'Нет ходов'}
+            </div>
+          </div>
+
+        </div>
+
+        {/* Анализ позиции */}
+        <aside className="flex flex-col gap-4">
+          {/* Название позиции */}
+          <Card className="h-fit">
+            <CardHeader>
+              <CardTitle>Информация о позиции</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {loading ? (
+                <div className="text-muted-foreground">Поиск позиции...</div>
+              ) : currentPosition ? (
+                <div className="space-y-4">
+                  <div>
+                    <h2 className="text-lg font-normal">{currentPosition.name_ru}</h2>
+                    <h3 className="text-sm font-medium text-muted-foreground">
+                    {currentPosition.name_en}
+                    </h3>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-muted-foreground">
+                  Позиция не найдена в базе данных. Попробуйте изменить расположение фигур.
+                </div>
+              )}
+            </CardContent>
+          </Card>
+          {/* Оценка позиции */}
           {showAnalysis && (
             <Card>
               <CardHeader>
@@ -199,37 +265,24 @@ const AnalisisPage = () => {
               </CardContent>
             </Card>
           )}
-        </div>
-
-        <Card className="h-fit">
-          <CardHeader>
-            <CardTitle>Информация о позиции</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <div className="text-muted-foreground">Поиск позиции...</div>
-            ) : currentPosition ? (
-              <div className="space-y-4">
-                <div>
-                  <h3 className="text-sm font-medium text-muted-foreground">Название на русском:</h3>
-                  <p className="text-lg">{currentPosition.name_ru}</p>
-                </div>
-                <div>
-                  <h3 className="text-sm font-medium text-muted-foreground">Название на английском:</h3>
-                  <p className="text-lg">{currentPosition.name_en}</p>
-                </div>
-                <div>
-                  <h3 className="text-sm font-medium text-muted-foreground">FEN:</h3>
-                  <p className="text-sm font-mono bg-muted p-2 rounded break-all">{currentPosition.fen}</p>
-                </div>
-              </div>
-            ) : (
-              <div className="text-muted-foreground">
-                Позиция не найдена в базе данных. Попробуйте изменить расположение фигур.
-              </div>
-            )}
-          </CardContent>
-        </Card>
+          {/* Возврат хода */}
+          <div className="flex gap-2">
+            <Button 
+              onClick={undoMove} 
+              disabled={currentMoveIndex < 0}
+              variant="outline"
+            >
+              Отменить ход
+            </Button>
+            <Button 
+              onClick={redoMove} 
+              disabled={currentMoveIndex >= moveHistory.length - 1}
+              variant="outline"
+            >
+              Вернуть ход
+            </Button>
+          </div>
+        </aside>
       </div>
     </div>
   )
