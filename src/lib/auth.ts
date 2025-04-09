@@ -4,6 +4,7 @@ import Credentials from "next-auth/providers/credentials";
 import { prisma } from "@/lib/prisma";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { loginSchema } from "@/lib/schema";
+import type { JWT } from "next-auth/jwt";
 
 if (!process.env.AUTH_SECRET) {
     throw new Error("AUTH_SECRET is not defined");
@@ -14,6 +15,9 @@ interface User {
     email: string;
     username: string;
     password: string;
+    attributes?: {
+        name: string;
+    }[];
 }
 
 declare module "next-auth" {
@@ -21,7 +25,17 @@ declare module "next-auth" {
         user: {
             id: string;
             name: string;
+            attributes: string[];
         }
+    }
+}
+
+// Update the JWT interface augmentation
+declare module "next-auth/jwt" {
+    interface JWT {
+        id: string;
+        username: string;
+        attributes: string[];
     }
 }
 
@@ -46,6 +60,9 @@ export const { auth, handlers, signOut, signIn } = NextAuth({
                         where: {
                             email: validatedCredentials.email,
                             password: validatedCredentials.password
+                        },
+                        include: {
+                            attributes: true
                         }
                     });
 
@@ -68,17 +85,34 @@ export const { auth, handlers, signOut, signIn } = NextAuth({
         strategy: "jwt"
     },
     callbacks: {
-        async jwt({ token, user }) {
-            if (user) {
-                token.id = user.id;
-                token.username = (user as User).username;
+        async jwt({ token, user, account, trigger }) {
+            // Always fetch fresh user data with attributes
+            const dbUser = await prisma.user.findUnique({
+                where: { 
+                    id: user?.id || token.id 
+                },
+                include: {
+                    attributes: true
+                }
+            });
+
+            if (dbUser) {
+                token.id = dbUser.id;
+                token.username = dbUser.username;
+                token.attributes = dbUser.attributes.map(attr => attr.name);
+                console.log('JWT Debug: Fresh attributes loaded', {
+                    userId: dbUser.id,
+                    attributes: token.attributes
+                });
             }
+
             return token;
         },
         async session({ session, token }) {
             if (session.user) {
                 session.user.id = token.id as string;
                 session.user.name = token.username as string;
+                session.user.attributes = Array.isArray(token.attributes) ? token.attributes : [];
             }
             return session;
         }

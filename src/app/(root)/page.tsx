@@ -10,10 +10,12 @@ export default async function Home() {
         <main className='flex flex-col items-center gap-4'>
  
             <section className='flex flex-col items-center'>
-                <h2 className='border-b-1 border-neutral-500 pb-2 mb-2 text-xl'>
-                    Добро пожаловать, {session?.user?.name}!
-                </h2>
-                <h1 className='text-3xl'>Chess</h1>
+                <Card className='p-3 items-center gap-2'>
+                    <h2 className='border-b-1 border-neutral-500 pb-2 text-xl'>
+                        Добро пожаловать, {session?.user?.name}!
+                    </h2>
+                    <h1 className='text-3xl'>Chess</h1>
+                </Card>
             </section>
 
             <section className='grid grid-cols-2 gap-4'>
