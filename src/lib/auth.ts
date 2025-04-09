@@ -98,7 +98,7 @@ export const { auth, handlers, signOut, signIn } = NextAuth({
 
             if (dbUser) {
                 token.id = dbUser.id;
-                token.username = dbUser.username;
+                token.username = dbUser.username || '';
                 token.attributes = dbUser.attributes.map(attr => attr.name);
                 console.log('JWT Debug: Fresh attributes loaded', {
                     userId: dbUser.id,
