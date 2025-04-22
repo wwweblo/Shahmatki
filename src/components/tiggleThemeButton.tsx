@@ -7,13 +7,21 @@ const ToggleThemeButton = ({classname = 'bg-black text-white dark:bg-blue-300 da
   const [isDarkMode, setIsDarkMode] = useState(false);
 
   useEffect(() => {
-    // Sync state with the actual class on the body element
-    setIsDarkMode(document.body.classList.contains('dark'));
+    // Get theme from localStorage or system preference
+    const savedTheme = localStorage.getItem('theme');
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    
+    const shouldBeDark = savedTheme === 'dark' || (!savedTheme && prefersDark);
+    
+    setIsDarkMode(shouldBeDark);
+    document.body.classList.toggle('dark', shouldBeDark);
   }, []);
 
   const toggleDarkMode = () => {
+    const newDarkMode = !isDarkMode;
     document.body.classList.toggle('dark');
-    setIsDarkMode(!isDarkMode);
+    setIsDarkMode(newDarkMode);
+    localStorage.setItem('theme', newDarkMode ? 'dark' : 'light');
   };
 
   return (

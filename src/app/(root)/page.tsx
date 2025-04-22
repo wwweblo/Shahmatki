@@ -18,7 +18,7 @@ export default async function Home() {
                 </Card>
             </section>
 
-            <section className='grid grid-cols-2 gap-4'>
+            <section className='grid grid-cols-2 md:grid-cols-3 gap-4'>
                 <Card>
                     <CardHeader>
                         <CardTitle className='text-2xl leading-none'>

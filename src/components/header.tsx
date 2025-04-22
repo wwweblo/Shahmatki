@@ -10,7 +10,7 @@ export default function Header() {
     ]
 
     return (
-        <header className="flex p-2 shadow">
+        <header className="flex py-2 px-5 shadow">
 
             <div className="flex-shrink-0 flex items-center">
                 <Link href="/" className="text-2xl font-bold text-foreground">

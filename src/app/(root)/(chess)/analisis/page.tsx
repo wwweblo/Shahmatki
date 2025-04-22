@@ -43,18 +43,24 @@ const AnalisisPage = () => {
   }, [])
 
   // Анализ позиции
+  // Add new state near other state declarations
+  const [isAnalyzing, setIsAnalyzing] = useState(false)
+  
+  // Update analyzePosition function
   const analyzePosition = useCallback(() => {
     if (!stockfish || !showAnalysis) return
-
+  
+    setIsAnalyzing(true)
     stockfish.postMessage(`position fen ${game.fen()}`)
     stockfish.postMessage('go depth 18')
-
+  
     stockfish.onmessage = (event) => {
       const response = event.data
       
       if (response.includes('bestmove')) {
         const move = response.split('bestmove ')[1].split(' ')[0]
         setBestMove(move)
+        setIsAnalyzing(false)
       } else if (response.includes('score cp')) {
         const match = response.match(/score cp (-?\d+)/)
         if (match) {
@@ -158,32 +164,50 @@ const AnalisisPage = () => {
     }
   }
 
+  // Add new state for board width
+  const [boardWidth, setBoardWidth] = useState(500)
+
+  // Updated window resize handler
+  useEffect(() => {
+    const updateBoardWidth = () => {
+      const width = window.innerWidth
+      if (width < 768) { // Mobile breakpoint
+        setBoardWidth(Math.min(width * 0.90, 500)) // 95% of screen width, max 500px
+      } else {
+        setBoardWidth(500) // Desktop size
+      }
+    }
+
+    // Initial call
+    updateBoardWidth()
+
+    // Add event listener
+    window.addEventListener('resize', updateBoardWidth)
+
+    // Cleanup
+    return () => window.removeEventListener('resize', updateBoardWidth)
+  }, [])
+
+  // Update the header section in the return statement
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-6 flex justify-between items-center">
-        <h1 className="text-2xl font-bold">Анализ позиции</h1>
-        <div className="flex items-center gap-4">
-          <div className="flex items-center space-x-2">
-            <Switch
-              id="analysis-mode"
-              checked={showAnalysis}
-              onCheckedChange={setShowAnalysis}
-            />
-            <Label htmlFor="analysis-mode">Анализ позиции</Label>
-          </div>
-          <Button onClick={resetBoard}>
-            Сбросить доску
-          </Button>
+        <div className="flex items-center gap-2">
+          <h1 className="text-2xl font-bold">Анализ позиции</h1>
+          {isAnalyzing && (
+            <div className="animate-spin rounded-full h-4 w-4 border-2 border-primary border-t-transparent" />
+          )}
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-[minmax(500px,_1fr)_400px] gap-6">
-        <div className="flex flex-col gap-4">
-          <div className="flex justify-center items-center w-fit">
+      {/* Update grid to be more responsive */}
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 w-full xl:w-fit mx-auto">
+        <div className="flex flex-col gap-4 w-full xl:w-fit">
+          <div className="flex justify-center items-center w-full">
             <Chessboard 
               position={game.fen()}
               onPieceDrop={onPieceDrop}
-              boardWidth={500}
+              boardWidth={boardWidth}
               customArrows={bestMove ? [[
                 bestMove.substring(0, 2) as Square,
                 bestMove.substring(2, 4) as Square,
@@ -214,6 +238,19 @@ const AnalisisPage = () => {
 
         {/* Анализ позиции */}
         <aside className="flex flex-col gap-4">
+        <div className="flex items-center gap-4">
+          <div className="flex items-center space-x-2">
+            <Switch
+              id="analysis-mode"
+              checked={showAnalysis}
+              onCheckedChange={setShowAnalysis}
+            />
+            <Label htmlFor="analysis-mode">Анализ позиции</Label>
+          </div>
+          <Button onClick={resetBoard}>
+            Сбросить доску
+          </Button>
+        </div>
           {/* Название позиции */}
           <Card className="h-fit">
             <CardHeader>
@@ -225,10 +262,22 @@ const AnalisisPage = () => {
               ) : currentPosition ? (
                 <div className="space-y-4">
                   <div>
-                    <h2 className="text-lg font-normal">{currentPosition.name_ru}</h2>
-                    <h3 className="text-sm font-medium text-muted-foreground">
-                    {currentPosition.name_en}
-                    </h3>
+                    <a 
+                      href={`https://ya.ru/search/?text=%D1%88%D0%B0%D1%85%D0%BC%D0%B0%D1%82%D0%BD%D1%8B%D0%B9+%D0%B4%D0%B5%D0%B1%D1%8E%D1%82+${encodeURIComponent(currentPosition.name_ru)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-lg font-normal hover:underline text-primary"
+                    >
+                      {currentPosition.name_ru}
+                    </a>
+                    <a 
+                      href={`https://www.google.com/search?q=chess+opening+${encodeURIComponent(currentPosition.name_en)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block text-sm font-medium text-muted-foreground hover:underline"
+                    >
+                      {currentPosition.name_en}
+                    </a>
                   </div>
                 </div>
               ) : (
