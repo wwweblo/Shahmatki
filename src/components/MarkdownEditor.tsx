@@ -77,7 +77,7 @@ export function MarkdownEditor({ value, onChange, label }: MarkdownEditorProps) 
                 <Textarea
                     value={value}
                     onChange={(e) => onChange(e.target.value)}
-                    className="min-h-[200px] font-mono"
+                    className="min-h-[200px]"
                     placeholder="Введите текст с поддержкой Markdown..."
                 />
             )}

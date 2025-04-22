@@ -101,8 +101,8 @@ export default function AuthForm() {
                         {isLogin ? 'Вход в аккаунт' : 'Создание аккаунта'}
                     </h2>
                 </div>
-                <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-                    <div className="rounded-md shadow-sm space-y-px">
+                <form className="mt-8 flex flex-col gap-3" onSubmit={handleSubmit}>
+                    <div className="rounded-md shadow-sm space-y-3 p-3">
                         {!isLogin && (
                             <div>
                                 <label htmlFor="username" className="sr-only">
