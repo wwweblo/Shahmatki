@@ -179,7 +179,7 @@ const AnalisisPage = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-[minmax(500px,_1fr)_400px] gap-6">
         <div className="flex flex-col gap-4">
-          <div className="flex justify-center">
+          <div className="flex justify-center items-center w-fit">
             <Chessboard 
               position={game.fen()}
               onPieceDrop={onPieceDrop}

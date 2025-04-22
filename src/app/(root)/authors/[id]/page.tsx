@@ -12,6 +12,7 @@ import {
   CardTitle,
   CardFooter
 } from "@/components/ui/card";
+import {Pencil,Trash2} from 'lucide-react'
 
 interface AuthorPageProps {
     params: {
@@ -63,7 +64,7 @@ export default async function AuthorPage({ params }: AuthorPageProps) {
                             {author.articles.map((article) => (
                                 <Card key={article.id}>
                                     <CardHeader>
-                                        <div className="flex justify-between items-start">
+                                        <div className="flex flex-col justify-between items-start">
                                             <div>
                                                 <Link
                                                     href={`/articles/${article.id}`}
@@ -76,23 +77,23 @@ export default async function AuthorPage({ params }: AuthorPageProps) {
                                                 </p>
                                             </div>
                                             {isCurrentUser && (
-                                                <div className="flex space-x-2">
+                                                <div className="flex space-x-2 bg-neutral-300 items-center px-4 rounded-full">
                                                     <Link
                                                         href={`/articles/${article.id}/edit`}
                                                         className="text-sm text-primary hover:text-primary/80"
                                                     >
-                                                        Редактировать
+                                                        <Pencil width={'1rem'}/>
                                                     </Link>
                                                     <form
                                                         action={`/api/articles/${article.id}`}
                                                         method="DELETE"
-                                                        className="inline"
+                                                        className="flex items-center"
                                                     >
                                                         <button
                                                             type="submit"
                                                             className="text-sm text-destructive hover:text-destructive/80"
                                                         >
-                                                            Удалить
+                                                            <Trash2 width={'1rem'}/>
                                                         </button>
                                                     </form>
                                                 </div>
