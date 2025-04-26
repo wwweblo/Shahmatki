@@ -12,6 +12,13 @@ export default function AuthForm() {
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
     const [isLogin, setIsLogin] = useState(true);
+    const [verificationCode, setVerificationCode] = useState('');
+    const [isVerifying, setIsVerifying] = useState(false);
+    const [registrationData, setRegistrationData] = useState<{
+        email: string;
+        password: string;
+        username: string;
+    } | null>(null);
 
     useEffect(() => {
         const register = searchParams.get('register');
@@ -51,46 +58,141 @@ export default function AuthForm() {
                     router.push('/');
                 }
             } else {
-                const response = await fetch('/api/auth/register', {
+                // Send verification email
+                const emailResponse = await fetch('/api/email', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email, password, username }),
+                    body: JSON.stringify({ email }),
                 });
 
-                const data = await response.json();
-
-                if (!response.ok) {
-                    if (data.error?.issues) {
-                        // Обработка ошибок валидации Zod
-                        const validationErrors = data.error.issues.map((issue: { path: string[]; message: string }) => {
-                            const field = issue.path[0];
-                            const message = issue.message;
-                            return `${field}: ${message}`;
-                        });
-                        throw new Error(validationErrors.join('\n'));
-                    }
-                    throw new Error(data.error || 'Ошибка при регистрации');
+                if (!emailResponse.ok) {
+                    throw new Error('Ошибка при отправке кода подтверждения');
                 }
 
-                const result = await signIn('credentials', {
-                    email,
-                    password,
-                    redirect: false,
-                });
-
-                if (result?.error) {
-                    throw new Error('Ошибка при входе после регистрации');
-                }
-
-                if (result?.ok) {
-                    router.push('/');
-                }
+                setRegistrationData({ email, password, username });
+                setIsVerifying(true);
+                setError('Код подтверждения отправлен на вашу почту');
             }
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Произошла ошибка');
         } finally {
             setLoading(false);
         }
+    }
+
+    async function handleVerification(e: React.FormEvent<HTMLFormElement>) {
+        e.preventDefault();
+        setLoading(true);
+        setError(null);
+
+        try {
+            // Verify the code
+            const verifyResponse = await fetch('/api/email', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    email: registrationData?.email,
+                    code: verificationCode
+                }),
+            });
+
+            if (!verifyResponse.ok) {
+                const data = await verifyResponse.json();
+                throw new Error(data.error || 'Ошибка проверки кода');
+            }
+
+            // If verification successful, proceed with registration
+            const response = await fetch('/api/auth/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(registrationData),
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                if (data.error?.issues) {
+                    const validationErrors = data.error.issues.map((issue: { path: string[]; message: string }) => {
+                        const field = issue.path[0];
+                        const message = issue.message;
+                        return `${field}: ${message}`;
+                    });
+                    throw new Error(validationErrors.join('\n'));
+                }
+                throw new Error(data.error || 'Ошибка при регистрации');
+            }
+
+            // Auto login after registration
+            const result = await signIn('credentials', {
+                email: registrationData?.email,
+                password: registrationData?.password,
+                redirect: false,
+            });
+
+            if (result?.error) {
+                throw new Error('Ошибка при входе после регистрации');
+            }
+
+            if (result?.ok) {
+                router.push('/');
+            }
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Произошла ошибка');
+        } finally {
+            setLoading(false);
+        }
+    }
+
+    if (isVerifying && !isLogin) {
+        return (
+            <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+                <div className="max-w-md w-full space-y-8">
+                    <div>
+                        <h2>Подтверждение email</h2>
+                    </div>
+                    <form className="mt-8 flex flex-col gap-3" onSubmit={handleVerification}>
+                        <div className="rounded-md shadow-sm space-y-3 p-3">
+                            <div>
+                                <label htmlFor="verificationCode" className="sr-only">
+                                    Код подтверждения
+                                </label>
+                                <Input
+                                    id="verificationCode"
+                                    name="verificationCode"
+                                    type="text"
+                                    required
+                                    placeholder="Введите код подтверждения"
+                                    value={verificationCode}
+                                    onChange={(e) => setVerificationCode(e.target.value)}
+                                />
+                            </div>
+                        </div>
+
+                        {error && (
+                            <div className="border-red-400 border-1 py-2 rounded-full text-sm text-center whitespace-pre-line">
+                                {error}
+                            </div>
+                        )}
+
+                        <div className="flex flex-col gap-2">
+                            <Button
+                                type="submit"
+                                disabled={loading}
+                            >
+                                {loading ? 'Проверка...' : 'Подтвердить'}
+                            </Button>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => setIsVerifying(false)}
+                            >
+                                Назад
+                            </Button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        );
     }
 
     return (
@@ -137,7 +239,7 @@ export default function AuthForm() {
                                 id="password"
                                 name="password"
                                 type="password"
-                                required 
+                                required
                                 placeholder="Пароль"
                             />
                         </div>
@@ -189,4 +291,4 @@ export default function AuthForm() {
             </div>
         </div>
     );
-} 
+}

@@ -13,18 +13,33 @@ model User {
   username      String?         @unique
   email         String?         @unique
   password      String?
-  emailVerified DateTime?
+  emailVerified DateTime?       // Will be set when email is verified
+  isVerified    Boolean        @default(false) // Additional flag for quick checks
   image         String?
   accounts      Account[]
   sessions      Session[]
   articles      Article[]
-  attributes    Attribute[]     @relation("User Attributes") // Relation to attributes
+  attributes    Attribute[]     @relation("User Attributes")
+  verificationTokens EmailVerificationToken[] // New relation
 
   // Optional for WebAuthn support
   Authenticator Authenticator[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+// New model for email verification
+model EmailVerificationToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  email     String
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expires   DateTime
+  createdAt DateTime @default(now())
+
+  @@unique([email, token])
 }
 
 model Account {
