@@ -44,7 +44,7 @@ export default async function AuthorPage({ params }: AuthorPageProps) {
             <Card>
                 <CardHeader>
                     <CardTitle>
-                        {author.name || author.email || 'Анонимный автор'}
+                        {author.username || 'Анонимный автор'}
                     </CardTitle>
                     {author.email && (
                         <CardDescription>{author.email}</CardDescription>
@@ -64,7 +64,7 @@ export default async function AuthorPage({ params }: AuthorPageProps) {
                             {author.articles.map((article) => (
                                 <Card key={article.id}>
                                     <CardHeader>
-                                        <div className="flex flex-col justify-between items-start">
+                                        <div className="flex flex-col justify-between items-start gap-3">
                                             <div>
                                                 <Link
                                                     href={`/articles/${article.id}`}
@@ -77,12 +77,12 @@ export default async function AuthorPage({ params }: AuthorPageProps) {
                                                 </p>
                                             </div>
                                             {isCurrentUser && (
-                                                <div className="flex space-x-2 bg-neutral-300 items-center px-4 rounded-full">
+                                                <div className="flex space-x-2 bg-neutral-200 items-center px-4 rounded-full">
                                                     <Link
                                                         href={`/articles/${article.id}/edit`}
                                                         className="text-sm text-primary hover:text-primary/80"
                                                     >
-                                                        <Pencil width={'1rem'}/>
+                                                        <Pencil width={'1rem'} color='black'/>
                                                     </Link>
                                                     <form
                                                         action={`/api/articles/${article.id}`}

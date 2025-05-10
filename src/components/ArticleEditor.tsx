@@ -187,11 +187,11 @@ export function ArticleEditor({ article, isAuthor, onSave, onCancel }: ArticleEd
 
     return (
         <div className="space-y-6">
-            <div className="flex justify-between items-start">
-                <div>
+            <div className="flex justify-between items-star">
+                <div className='flex flex-col gap-3'>
                     <Link
                         href="/articles"
-                        className="bg-blue-300 text-background px-2 py-1 rounded-full"
+                        className="bg-blue-300 text-background px-2 py-1 rounded-full w-fit mr-2"
                     >
                         ← Назад к списку
                     </Link>

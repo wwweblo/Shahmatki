@@ -29,7 +29,7 @@ export function ArticleEditorWrapper({ article, isAuthor }: ArticleEditorWrapper
     const [currentPosition, setCurrentPosition] = useState<string | null>(null);
     const [showPromotionDialog, setShowPromotionDialog] = useState(false);
     const [pendingMove, setPendingMove] = useState<{ from: Square; to: Square } | null>(null);
-    
+
     const game = useMemo(() => {
         if (article.hasChessBoard && article.fenPosition) {
             return new Chess(article.fenPosition);
@@ -82,7 +82,7 @@ export function ArticleEditorWrapper({ article, isAuthor }: ArticleEditorWrapper
             to: targetSquare,
             promotion: 'q'
         });
-        
+
         if (move) {
             setCurrentPosition(game.fen());
             return true;
@@ -97,7 +97,7 @@ export function ArticleEditorWrapper({ article, isAuthor }: ArticleEditorWrapper
                 to: pendingMove.to,
                 promotion: piece
             });
-            
+
             if (move) {
                 setCurrentPosition(game.fen());
             }
@@ -114,16 +114,10 @@ export function ArticleEditorWrapper({ article, isAuthor }: ArticleEditorWrapper
     };
 
     return (
-        <div className="space-y-8">
-            <ArticleEditor
-                article={article}
-                isAuthor={isAuthor}
-                onSave={handleSave}
-                onCancel={handleCancel}
-            />
-            
+        <div className="flex flex-col md:flex-row gap-8">
+
             {article.hasChessBoard && (
-                <div className="mt-8">
+                <div className="md:w-96 md:sticky md:top-4">
                     <ChessboardDnDProvider>
                         <div>
                             <Chessboard
@@ -162,7 +156,12 @@ export function ArticleEditorWrapper({ article, isAuthor }: ArticleEditorWrapper
                     </ChessboardDnDProvider>
                 </div>
             )}
-
+                <ArticleEditor
+                    article={article}
+                    isAuthor={isAuthor}
+                    onSave={handleSave}
+                    onCancel={handleCancel}
+                />
             {showPromotionDialog && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
                     <div className="bg-white p-4 rounded-lg shadow-lg">
@@ -198,4 +197,4 @@ export function ArticleEditorWrapper({ article, isAuthor }: ArticleEditorWrapper
             )}
         </div>
     );
-} 
+}
