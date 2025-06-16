@@ -3,21 +3,12 @@
 import { useState, useEffect, useCallback } from "react";
 import { Chess } from "chess.js";
 import { Chessboard } from "react-chessboard";
-import { LineChart, Line, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { 
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter
-} from "@/components/ui/dialog";
+import { EvaluationChart } from "@/components/EvaluationChart";
 
 const STOCKFISH_PATH = "/stockfish/stockfish.js";
 
-type PlayerColor = 'w' | 'b';
+type PlayerColor = "w" | "b";
 
 type Difficulty = {
   label: string;
@@ -25,24 +16,10 @@ type Difficulty = {
 };
 
 const difficulties: Difficulty[] = [
-  { label: "Начинающий", depth: 5 },
-  { label: "Средний", depth: 10 },
-  { label: "Продвинутый", depth: 15 },
-  { label: "Эксперт", depth: 20 }
+  { label: "🐤 Начинающий", depth: 5 },
+  { label: "😎 Средний", depth: 10 },
+  { label: "🤓 Продвинутый", depth: 15 },
 ];
-
-// Кастомный Tooltip для графика
-const CustomTooltip = ({ active, payload, label }: any) => {
-  if (active && payload && payload.length) {
-    return (
-      <div className="bg-white p-4 border rounded shadow">
-        <p className="font-bold">{label}</p>
-        <p>Оценка: {payload[0].value.toFixed(2)}</p>
-      </div>
-    );
-  }
-  return null;
-};
 
 const ChessPage = () => {
   const [game, setGame] = useState(new Chess());
@@ -54,10 +31,11 @@ const ChessPage = () => {
   const [currentMove, setCurrentMove] = useState(0);
   const [boardSize, setBoardSize] = useState(500);
   const [isBotThinking, setIsBotThinking] = useState(false);
-  const [playerColor, setPlayerColor] = useState<PlayerColor>('w');
+  const [playerColor, setPlayerColor] = useState<PlayerColor>("w");
   const [gameStarted, setGameStarted] = useState(false);
-  const [selectedDifficulty, setSelectedDifficulty] = useState<Difficulty>(difficulties[1]);
-  const [showSetupDialog, setShowSetupDialog] = useState(true);
+  const [selectedDifficulty, setSelectedDifficulty] = useState<Difficulty>(
+    difficulties[1]
+  );
 
   useEffect(() => {
     const updateBoardSize = () => {
@@ -74,10 +52,7 @@ const ChessPage = () => {
     const engine = new Worker(STOCKFISH_PATH);
     engine.postMessage("uci");
     setStockfish(engine);
-
-    return () => {
-      engine.terminate();
-    };
+    return () => engine.terminate();
   }, []);
 
   const updateEvaluation = useCallback(() => {
@@ -92,7 +67,7 @@ const ChessPage = () => {
         const match = response.match(/score cp (-?\d+)/);
         if (match) {
           const evalValue = parseInt(match[1], 10) / 100;
-          const adjustedEval = playerColor === 'w' ? evalValue : -evalValue;
+          const adjustedEval = playerColor === "w" ? evalValue : -evalValue;
 
           setHistory((prev) => [...prev.slice(0, currentMove), adjustedEval]);
           setEvaluation(adjustedEval);
@@ -108,7 +83,6 @@ const ChessPage = () => {
     }
 
     setIsBotThinking(true);
-
     const currentFen = game.fen();
     stockfish.postMessage(`position fen ${currentFen}`);
     stockfish.postMessage(`go depth ${depth}`);
@@ -121,12 +95,12 @@ const ChessPage = () => {
         if (bestMove && bestMove.length >= 4) {
           try {
             const tempGame = new Chess(currentFen);
-            const move = tempGame.move({ 
-              from: bestMove.substring(0, 2), 
-              to: bestMove.substring(2, 4), 
-              promotion: "q" 
+            const move = tempGame.move({
+              from: bestMove.substring(0, 2),
+              to: bestMove.substring(2, 4),
+              promotion: "q",
             });
-            
+
             if (move) {
               game.move(move);
               setFen(game.fen());
@@ -134,34 +108,32 @@ const ChessPage = () => {
               updateEvaluation();
             }
           } catch (error) {
-            console.error('Ошибка хода бота:', error);
+            console.error("Ошибка хода бота:", error);
           }
         }
+
         setIsBotThinking(false);
-        stockfish.removeEventListener('message', handleMessage);
+        stockfish.removeEventListener("message", handleMessage);
       }
     };
 
-    stockfish.addEventListener('message', handleMessage);
+    stockfish.addEventListener("message", handleMessage);
   }, [game, stockfish, depth, updateEvaluation]);
 
   const onDrop = (sourceSquare: string, targetSquare: string) => {
     if (isBotThinking || !gameStarted) return false;
 
-    const currentTurn = game.turn();
-    
-    if (playerColor !== currentTurn) {
-      console.log('Сейчас не ваш ход');
+    if (playerColor !== game.turn()) {
+      console.log("Сейчас не ваш ход");
       return false;
     }
 
     try {
-      const move = game.move({ 
-        from: sourceSquare, 
-        to: targetSquare, 
-        promotion: "q" 
+      const move = game.move({
+        from: sourceSquare,
+        to: targetSquare,
+        promotion: "q",
       });
-
       if (!move) return false;
 
       setFen(game.fen());
@@ -170,7 +142,7 @@ const ChessPage = () => {
       setTimeout(makeBotMove, 500);
       return true;
     } catch (error) {
-      console.error('Ошибка при выполнении хода:', error);
+      console.error("Ошибка при выполнении хода:", error);
       return false;
     }
   };
@@ -185,23 +157,20 @@ const ChessPage = () => {
 
   const startGame = () => {
     const newGame = new Chess();
-    
     setGame(newGame);
     setFen(newGame.fen());
     setHistory([]);
     setCurrentMove(0);
     setGameStarted(true);
     setDepth(selectedDifficulty.depth);
-    setShowSetupDialog(false);
     setIsBotThinking(false);
 
-    if (playerColor === 'b') {
+    if (playerColor === "b") {
       setTimeout(() => {
         if (!stockfish) return;
-        
         setIsBotThinking(true);
-        
-        stockfish.postMessage('ucinewgame');
+
+        stockfish.postMessage("ucinewgame");
         stockfish.postMessage(`position startpos`);
         stockfish.postMessage(`go depth ${selectedDifficulty.depth}`);
 
@@ -209,13 +178,12 @@ const ChessPage = () => {
           const response = event.data;
           if (response.includes("bestmove")) {
             const bestMove = response.split("bestmove ")[1].split(" ")[0];
-
             if (bestMove && bestMove.length >= 4) {
               try {
                 const move = newGame.move({
                   from: bestMove.substring(0, 2),
                   to: bestMove.substring(2, 4),
-                  promotion: "q"
+                  promotion: "q",
                 });
 
                 if (move) {
@@ -225,22 +193,21 @@ const ChessPage = () => {
                   updateEvaluation();
                 }
               } catch (error) {
-                console.error('Ошибка первого хода бота:', error);
+                console.error("Ошибка первого хода бота:", error);
               }
             }
             setIsBotThinking(false);
-            stockfish.removeEventListener('message', handleFirstMove);
+            stockfish.removeEventListener("message", handleFirstMove);
           }
         };
 
-        stockfish.addEventListener('message', handleFirstMove);
+        stockfish.addEventListener("message", handleFirstMove);
       }, 500);
     }
   };
 
   const resetGame = () => {
     setGameStarted(false);
-    setShowSetupDialog(true);
     setHistory([]);
     setCurrentMove(0);
     setEvaluation(0);
@@ -252,75 +219,63 @@ const ChessPage = () => {
   }));
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen p-4" style={{ background: "transparent" }}>
-      <h1 className="text-2xl font-bold mb-4">Шахматы против компьютера</h1>
+    <div className="flex flex-col items-center min-h-screen p-4 gap-6">
+      <h1 className="text-2xl font-bold">Шахматы против компьютера</h1>
 
-      <Dialog open={showSetupDialog} onOpenChange={(open) => {
-        if (gameStarted) return;
-        setShowSetupDialog(open);
-      }}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>Настройка новой партии</DialogTitle>
-            <DialogDescription>
-              Выберите цвет фигур и уровень сложности компьютера
-            </DialogDescription>
-          </DialogHeader>
+      {!gameStarted && (
+        <div className="w-full max-w-md p-6 border rounded-lg bg-background shadow">
+          <h2 className="text-lg font-semibold mb-4">Настройка новой партии</h2>
 
-          <div className="grid gap-6 py-4">
-            <div className="space-y-4">
-              <h4 className="text-sm font-medium leading-none">Выберите цвет:</h4>
-              <div className="flex gap-4">
-                <Button
-                  onClick={() => setPlayerColor('w')}
-                  variant={playerColor === 'w' ? 'default' : 'outline'}
-                  className="flex-1"
-                >
-                  Белые
-                </Button>
-                <Button
-                  onClick={() => setPlayerColor('b')}
-                  variant={playerColor === 'b' ? 'default' : 'outline'}
-                  className="flex-1"
-                >
-                  Черные
-                </Button>
-              </div>
-            </div>
-
-            <div className="space-y-4">
-              <h4 className="text-sm font-medium leading-none">Уровень сложности:</h4>
-              <div className="grid grid-cols-2 gap-2">
-                {difficulties.map((diff) => (
-                  <Button
-                    key={diff.depth}
-                    onClick={() => setSelectedDifficulty(diff)}
-                    variant={selectedDifficulty.depth === diff.depth ? 'default' : 'outline'}
-                  >
-                    {diff.label}
-                  </Button>
-                ))}
-              </div>
+          <div className="mb-6">
+            <h4 className="text-sm font-medium mb-2">Выберите цвет фигур:</h4>
+            <div className="flex gap-4">
+              <Button
+                onClick={() => setPlayerColor("w")}
+                className={`flex-1 ${playerColor === "w" ? "bg-neutral-100 text-black hover:bg-neutral-300" : "bg-muted text-white hover:bg-neutral-600"}`}
+              >
+                Белые
+              </Button>
+              <Button
+                onClick={() => setPlayerColor("b")}
+                className={`flex-1 ${playerColor === "b" ? "bg-neutral-100 text-black hover:bg-neutral-300" : "bg-muted text-white hover:bg-neutral-600"}`}
+              >
+                Черные
+              </Button>
             </div>
           </div>
 
-          <DialogFooter>
-            <Button onClick={startGame} className="w-full">
-              Начать игру
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          <div className="mb-6">
+            <h4 className="text-sm font-medium mb-2">Уровень сложности:</h4>
+            <div className="grid grid-cols-2 gap-2">
+              {difficulties.map((diff) => (
+                <Button
+                  key={diff.depth}
+                  onClick={() => setSelectedDifficulty(diff)}
+                  variant={
+                    selectedDifficulty.depth === diff.depth
+                      ? "default"
+                      : "outline"
+                  }
+                >
+                  {diff.label}
+                </Button>
+              ))}
+            </div>
+          </div>
+
+          <Button onClick={startGame} className="w-full">
+            Начать игру
+          </Button>
+        </div>
+      )}
 
       {gameStarted && (
         <>
-          <div className="flex items-center gap-4 mb-4">
+          <div className="flex items-center gap-4">
             <div className="text-sm">
-              Играете за: {playerColor === 'w' ? 'белых' : 'черных'}
+              Играете за: {playerColor === "w" ? "белых" : "черных"}
             </div>
-            <div className="text-sm">
-              Сложность: {selectedDifficulty.label}
-            </div>
+            <div className="text-sm">Сложность: {selectedDifficulty.label}</div>
             <Button variant="outline" size="sm" onClick={resetGame}>
               Новая игра
             </Button>
@@ -332,7 +287,7 @@ const ChessPage = () => {
               onPieceDrop={onDrop}
               boardWidth={boardSize}
               animationDuration={300}
-              boardOrientation={playerColor === 'w' ? 'white' : 'black'}
+              boardOrientation={playerColor === "w" ? "white" : "black"}
             />
           </div>
 
@@ -346,32 +301,10 @@ const ChessPage = () => {
           </Button>
 
           <div className="w-full max-w-md mt-4">
-            <div className="text-center mb-2">Оценка позиции: {evaluation.toFixed(2)}</div>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>График оценки позиции</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
-                  <LineChart
-                    data={evaluationData}
-                    margin={{ top: 10, right: 30, left: 20, bottom: 5 }}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="name" />
-                    <YAxis />
-                    <Tooltip content={<CustomTooltip />} />
-                    <Line
-                      type="monotone"
-                      dataKey="score"
-                      stroke="#8884d8"
-                      activeDot={{ r: 8 }}
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
+            <div className="text-center mb-2">
+              Оценка позиции: {evaluation.toFixed(2)}
+            </div>
+            <EvaluationChart data={evaluationData} />
           </div>
         </>
       )}
