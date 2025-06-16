@@ -3,9 +3,9 @@
 import { useState, useEffect, useCallback } from "react";
 import { Chess } from "chess.js";
 import { Chessboard } from "react-chessboard";
-import { LineChart, Line, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts"; // Import the necessary components
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"; // Card components for chart container
-import { Button } from "@/components/ui/button"; // Import the Button component
+import { LineChart, Line, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { 
   Dialog,
   DialogContent,
@@ -15,11 +15,10 @@ import {
   DialogFooter
 } from "@/components/ui/dialog";
 
-const STOCKFISH_PATH = "/stockfish/stockfish.js"; // Stockfish path
+const STOCKFISH_PATH = "/stockfish/stockfish.js";
 
 type PlayerColor = 'w' | 'b';
 
-// Добавим тип для уровня сложности
 type Difficulty = {
   label: string;
   depth: number;
@@ -32,22 +31,34 @@ const difficulties: Difficulty[] = [
   { label: "Эксперт", depth: 20 }
 ];
 
+// Кастомный Tooltip для графика
+const CustomTooltip = ({ active, payload, label }: any) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-white p-4 border rounded shadow">
+        <p className="font-bold">{label}</p>
+        <p>Оценка: {payload[0].value.toFixed(2)}</p>
+      </div>
+    );
+  }
+  return null;
+};
+
 const ChessPage = () => {
   const [game, setGame] = useState(new Chess());
   const [fen, setFen] = useState(game.fen());
   const [stockfish, setStockfish] = useState<Worker | null>(null);
-  const [evaluation, setEvaluation] = useState(0); // Evaluation of the current position
-  const [depth, setDepth] = useState(10); // Depth for Stockfish
-  const [history, setHistory] = useState<number[]>([]); // History of evaluations
-  const [currentMove, setCurrentMove] = useState(0); // For syncing with chart
-  const [boardSize, setBoardSize] = useState(500); // Board size
-  const [isBotThinking, setIsBotThinking] = useState(false); // Bot thinking flag
+  const [evaluation, setEvaluation] = useState(0);
+  const [depth, setDepth] = useState(10);
+  const [history, setHistory] = useState<number[]>([]);
+  const [currentMove, setCurrentMove] = useState(0);
+  const [boardSize, setBoardSize] = useState(500);
+  const [isBotThinking, setIsBotThinking] = useState(false);
   const [playerColor, setPlayerColor] = useState<PlayerColor>('w');
   const [gameStarted, setGameStarted] = useState(false);
   const [selectedDifficulty, setSelectedDifficulty] = useState<Difficulty>(difficulties[1]);
   const [showSetupDialog, setShowSetupDialog] = useState(true);
 
-  // 📏 Responsive board size
   useEffect(() => {
     const updateBoardSize = () => {
       const minSize = Math.min(window.innerWidth, window.innerHeight) * 0.8;
@@ -59,7 +70,6 @@ const ChessPage = () => {
     return () => window.removeEventListener("resize", updateBoardSize);
   }, []);
 
-  // 🏁 Initialize Stockfish engine
   useEffect(() => {
     const engine = new Worker(STOCKFISH_PATH);
     engine.postMessage("uci");
@@ -70,7 +80,6 @@ const ChessPage = () => {
     };
   }, []);
 
-  // 🎯 Update evaluation after move
   const updateEvaluation = useCallback(() => {
     if (!stockfish || game.isGameOver()) return;
 
@@ -82,9 +91,7 @@ const ChessPage = () => {
       if (response.includes("score cp")) {
         const match = response.match(/score cp (-?\d+)/);
         if (match) {
-          // Оценка всегда с точки зрения белых
           const evalValue = parseInt(match[1], 10) / 100;
-          // Если игрок играет черными, инвертируем оценку
           const adjustedEval = playerColor === 'w' ? evalValue : -evalValue;
 
           setHistory((prev) => [...prev.slice(0, currentMove), adjustedEval]);
@@ -94,7 +101,6 @@ const ChessPage = () => {
     };
   }, [game, stockfish, depth, currentMove, playerColor]);
 
-  // 🤖 Bot makes a move
   const makeBotMove = useCallback(() => {
     if (!stockfish || game.isGameOver()) {
       setIsBotThinking(false);
@@ -103,7 +109,7 @@ const ChessPage = () => {
 
     setIsBotThinking(true);
 
-    const currentFen = game.fen(); // Сохраняем текущую позицию
+    const currentFen = game.fen();
     stockfish.postMessage(`position fen ${currentFen}`);
     stockfish.postMessage(`go depth ${depth}`);
 
@@ -114,7 +120,6 @@ const ChessPage = () => {
 
         if (bestMove && bestMove.length >= 4) {
           try {
-            // Создаем новый экземпляр игры с текущей позицией
             const tempGame = new Chess(currentFen);
             const move = tempGame.move({ 
               from: bestMove.substring(0, 2), 
@@ -123,7 +128,6 @@ const ChessPage = () => {
             });
             
             if (move) {
-              // Обновляем основную игру
               game.move(move);
               setFen(game.fen());
               setCurrentMove((prev) => prev + 1);
@@ -141,15 +145,11 @@ const ChessPage = () => {
     stockfish.addEventListener('message', handleMessage);
   }, [game, stockfish, depth, updateEvaluation]);
 
-  // 👤 Player makes a move
   const onDrop = (sourceSquare: string, targetSquare: string) => {
-    // Проверяем, не думает ли бот и началась ли игра
     if (isBotThinking || !gameStarted) return false;
 
-    // Проверяем, чей сейчас ход
     const currentTurn = game.turn();
     
-    // Проверяем, соответствует ли ход цвету игрока
     if (playerColor !== currentTurn) {
       console.log('Сейчас не ваш ход');
       return false;
@@ -175,7 +175,6 @@ const ChessPage = () => {
     }
   };
 
-  // ⏪ Undo move
   const undoMove = () => {
     if (game.history().length > 0) {
       game.undo();
@@ -184,11 +183,9 @@ const ChessPage = () => {
     }
   };
 
-  // 🎮 Start game
   const startGame = () => {
     const newGame = new Chess();
     
-    // Сначала обновляем все состояния
     setGame(newGame);
     setFen(newGame.fen());
     setHistory([]);
@@ -198,15 +195,12 @@ const ChessPage = () => {
     setShowSetupDialog(false);
     setIsBotThinking(false);
 
-    // Если игрок выбрал черные фигуры, бот должен сделать первый ход
     if (playerColor === 'b') {
-      // Используем setTimeout для гарантированного обновления состояния
       setTimeout(() => {
         if (!stockfish) return;
         
         setIsBotThinking(true);
         
-        // Отправляем команды боту
         stockfish.postMessage('ucinewgame');
         stockfish.postMessage(`position startpos`);
         stockfish.postMessage(`go depth ${selectedDifficulty.depth}`);
@@ -244,7 +238,6 @@ const ChessPage = () => {
     }
   };
 
-  // Функция сброса игры
   const resetGame = () => {
     setGameStarted(false);
     setShowSetupDialog(true);
@@ -253,9 +246,8 @@ const ChessPage = () => {
     setEvaluation(0);
   };
 
-  // 📊 Chart data
   const evaluationData = history.map((score, index) => ({
-    name: `Move ${index + 1}`,
+    name: `Ход ${index + 1}`,
     score,
   }));
 
@@ -264,7 +256,7 @@ const ChessPage = () => {
       <h1 className="text-2xl font-bold mb-4">Шахматы против компьютера</h1>
 
       <Dialog open={showSetupDialog} onOpenChange={(open) => {
-        if (gameStarted) return; // Предотвращаем закрытие диалога во время игры
+        if (gameStarted) return;
         setShowSetupDialog(open);
       }}>
         <DialogContent className="sm:max-w-[425px]">
@@ -369,7 +361,7 @@ const ChessPage = () => {
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="name" />
                     <YAxis />
-                    <Tooltip />
+                    <Tooltip content={<CustomTooltip />} />
                     <Line
                       type="monotone"
                       dataKey="score"

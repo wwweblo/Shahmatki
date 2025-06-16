@@ -14,16 +14,22 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import WaitingScreen from "./waiting-screen";
+import { Toaster } from "@/components/ui/sonner";
+import { toast } from "sonner";
+import { Badge } from "@/components/ui/badge";
 
 export default function GamePage() {
   const params = useParams();
   const searchParams = useSearchParams();
   const roomId = params.roomId as string;
-  const preferredColor = searchParams.get('preferredColor');
+  const preferredColor = searchParams.get("preferredColor");
 
   const [playerId, setPlayerId] = useState<string | null>(null);
   const [game, setGame] = useState(new Chess());
-  const [playerColor, setPlayerColor] = useState<"white" | "black" | null>(null);
+  const [playerColor, setPlayerColor] = useState<"white" | "black" | null>(
+    null
+  );
   const [isSpectator, setIsSpectator] = useState(false);
   const [waitingForOpponent, setWaitingForOpponent] = useState(true);
   const [gameUrl, setGameUrl] = useState<string | null>(null);
@@ -42,8 +48,7 @@ export default function GamePage() {
 
   // Функция для показа ошибки на 3 секунды
   const showError = (message: string) => {
-    setErrorMessage(message);
-    setTimeout(() => setErrorMessage(null), 3000);
+    toast(message);
   };
 
   // 🚀 Загружаем playerId ТОЛЬКО в браузере
@@ -78,7 +83,10 @@ export default function GamePage() {
   useEffect(() => {
     if (!roomId || !playerId) return;
 
-    const wsProtocol = typeof window !== "undefined" && window.location.protocol === "https:" ? "wss" : "ws";
+    const wsProtocol =
+      typeof window !== "undefined" && window.location.protocol === "https:"
+        ? "wss"
+        : "ws";
     const wsUrl = `${wsProtocol}://${typeof window !== "undefined" ? window.location.hostname : "localhost"}:4000?roomId=${roomId}&playerId=${playerId}&preferredColor=${preferredColor}`;
 
     console.log(`🔌 Подключение к WebSocket: ${wsUrl}`);
@@ -125,10 +133,9 @@ export default function GamePage() {
           try {
             newGame.move(data.move);
             console.log("♟️ Применен ход:", data.move);
-            
+
             // Проверяем окончание игры после каждого хода
             checkGameOver(newGame);
-            
           } catch (error) {
             console.error("❌ Невалидный ход от сервера:", data.move, error);
             return prevGame;
@@ -154,12 +161,12 @@ export default function GamePage() {
         setGameStarted(true);
         setRematchRequested(false);
         setOpponentRematchRequest(false);
-        
+
         // Обновляем цвет игрока, если он изменился
         if (data.color) {
           setPlayerColor(data.color);
         }
-        
+
         // Сбрасываем игру
         setGame(new Chess());
         showError("Реванш начался! ⚔️");
@@ -180,7 +187,7 @@ export default function GamePage() {
       let reason = "";
 
       if (gameInstance.isCheckmate()) {
-        const winner = gameInstance.turn() === 'w' ? "Черные" : "Белые";
+        const winner = gameInstance.turn() === "w" ? "Черные" : "Белые";
         result = `${winner} победили`;
         reason = "Мат";
       } else if (gameInstance.isDraw()) {
@@ -207,7 +214,8 @@ export default function GamePage() {
   };
 
   const makeMove = (move: { from: string; to: string; promotion?: string }) => {
-    if (!wsRef.current || isSpectator || game.turn() !== playerColor?.[0]) return;
+    if (!wsRef.current || isSpectator || game.turn() !== playerColor?.[0])
+      return;
 
     setGame((prevGame) => {
       const newGame = new Chess(prevGame.fen());
@@ -218,10 +226,9 @@ export default function GamePage() {
         if (!moveResult) {
           throw new Error("Невозможный ход");
         }
-        
+
         // Проверяем окончание игры после своего хода
         checkGameOver(newGame);
-        
       } catch {
         console.warn("⚠️ Ошибка: невозможный ход", move);
         showError("❌ Этот ход невозможен!");
@@ -278,44 +285,24 @@ export default function GamePage() {
 
   // Обновляем экран ожидания
   if (waitingForOpponent) {
-    return (
-      <div className="flex flex-col items-center justify-center h-screen text-center">
-        <h1>Ожидание второго игрока...</h1>
-        <p className="text-gray-600 mt-2">Отправьте ссылку другу, чтобы он присоединился!</p>
-        {gameUrl && (
-          <div className="flex flex-col items-center justify-center gap-2">
-            <p className="bg-neutral-200 dark:bg-neutral-800 p-2 rounded">{gameUrl}</p>
-            <Button
-              onClick={() => navigator.clipboard.writeText(gameUrl)}
-            >
-              Скопировать ссылку
-            </Button>
-          </div>
-        )}
-      </div>
-    );
+    return <WaitingScreen />;
   }
 
   return (
-    <div className="flex flex-col items-center justify-center h-screen">
-      {errorMessage && (
-        <div className="absolute top-4 bg-red-500 text-white px-4 py-2 rounded">
-          {errorMessage}
-        </div>
-      )}
-      
+    <div className="flex flex-col items-center h-screen">
       <div className="mb-4 text-center">
-        <h1>
-          {isSpectator 
-            ? "Вы зритель" 
-            : gameStarted 
-              ? `Вы играете за ${playerColor === 'white' ? 'белых' : 'черных'}`
+        <h1 className="text-2xl">
+          {isSpectator
+            ? "Вы зритель"
+            : gameStarted
+              ? `Вы играете за ${playerColor === "white" ? "белых" : "черных"}`
               : "Ожидание начала игры..."}
         </h1>
         {gameStarted && (
-          <p className="text-white mt-2">
+          <Badge variant="secondary" className="px-3 py-1">
+            <div className="w-2 h-2 bg-blue-300 rounded-full mr-2 animate-pulse" />
             {game.turn() === playerColor?.[0] ? "Ваш ход!" : "Ход противника"}
-          </p>
+          </Badge>
         )}
         {opponentRematchRequest && !rematchDialogOpen && (
           <p className="text-yellow-400 mt-2">
@@ -332,7 +319,7 @@ export default function GamePage() {
               showError("❌ Дождитесь начала игры!");
               return false;
             }
-            
+
             const move = { from: s, to: t, promotion: "q" };
 
             if (!isSpectator && game.turn() === playerColor?.[0]) {
@@ -349,7 +336,10 @@ export default function GamePage() {
       </div>
 
       {/* Диалоговое окно с результатом игры */}
-      <Dialog open={isGameOverDialogOpen} onOpenChange={setIsGameOverDialogOpen}>
+      <Dialog
+        open={isGameOverDialogOpen}
+        onOpenChange={setIsGameOverDialogOpen}
+      >
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Игра окончена</DialogTitle>
@@ -361,9 +351,7 @@ export default function GamePage() {
             <Button onClick={() => setIsGameOverDialogOpen(false)}>
               Закрыть
             </Button>
-            <Button onClick={downloadPGN}>
-              Скачать партию
-            </Button>
+            <Button onClick={downloadPGN}>Скачать партию</Button>
             <Button onClick={requestRematch} disabled={rematchRequested}>
               {rematchRequested ? "Ожидание..." : "Реванш"}
             </Button>
@@ -384,12 +372,11 @@ export default function GamePage() {
             <Button onClick={declineRematch} variant="outline">
               Отклонить
             </Button>
-            <Button onClick={acceptRematch}>
-              Принять вызов
-            </Button>
+            <Button onClick={acceptRematch}>Принять вызов</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      <Toaster />
     </div>
   );
 }
